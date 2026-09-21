@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Aplikasi LPJ</title>
+    <link rel="icon" href="https://fav.farm/📊">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Library untuk Cetak PDF (html2pdf + Dependencies) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f3f4f6; }
+        .tab-active {
+            border-bottom: 2px solid #2563eb;
+            color: #2563eb;
+            font-weight: 600;
+        }
+        .tab-inactive {
+            color: #6b7280;
+            border-bottom: 2px solid transparent;
+        }
+        .tab-inactive:hover {
+            color: #374151;
+            border-bottom: 2px solid #d1d5db;
+        }
+        .table-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        .table-container::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+            border-radius: 4px;
+        }
+        .table-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+    </style>
+</head>
+<body class="font-sans antialiased text-gray-800">
+
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-primary-600 text-white p-2 rounded-lg">
+                            <i class="fas fa-file-invoice-dollar text-xl"></i>
+                        </div>
+                        <h1 class="text-xl md:text-2xl font-bold text-gray-900 tracking-tight">LPJ Keuangan App</h1>
+                    </div>                                                   
+                    <!-- Section Selector & PDF Button -->
+                    <div class="w-full sm:w-auto flex flex-wrap items-center gap-3">
+                        <button id="btn-cetak-pdf" type="button" onclick="generatePDFGabungan()" class="bg-red-600 hover:bg-red-700 active:bg-red-800 text-white text-sm font-medium px-4 py-2.5 rounded-lg shadow-sm transition-colors flex items-center gap-2 cursor-pointer">
+                            <i class="fas fa-file-pdf"></i>
+                            <span>Cetak PDF Gabungan</span>
+                        </button>
+                        <!-- Section Selector -->
+                        <div class="flex items-center gap-2">
+                            <label for="seksi-selector" class="text-sm font-medium text-gray-700 hidden sm:block">Pilih Komisi:</label>
+                            <select id="seksi-selector" onchange="changeSeksi(this.value)" class="w-full sm:w-64 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5 shadow-sm transition-colors cursor-pointer">
+                                <option value="" disabled selected>-- Pilih Komisi/Seksi --</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            
+            <!-- Empty State -->
+            <div id="empty-state" class="flex flex-col items-center justify-center py-20 text-center bg-white rounded-2xl shadow-sm border border-gray-100 h-full">
+                <div class="bg-blue-50 text-blue-500 p-4 rounded-full mb-4">
+                    <i class="fas fa-hand-pointer text-4xl"></i>
+                </div>
+                <h2 class="text-2xl font-semibold text-gray-800 mb-2">Belum Ada Komisi Terpilih</h2>
+                <p class="text-gray-500 max-w-md">Silakan pilih komisi (seksi) pada menu dropdown di bagian atas untuk mulai mengelola anggaran dan transaksi.</p>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div id="dashboard-content" class="hidden flex-col gap-6">
+                
+                <!-- Section Title & Tabs -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-6 py-5 border-b border-gray-200 bg-gray-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h2 id="active-seksi-title" class="text-2xl font-bold text-gray-800">Nama Seksi</h2>
+                            <p class="text-sm text-gray-500 mt-1">Kelola data keuangan untuk komisi ini</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Tabs Navigation -->
+                    <div class="flex overflow-x-auto">
+                        <button onclick="switchTab('anggaran')" id="tab-btn-anggaran" class="flex-1 min-w-[120px] py-4 px-6 text-sm font-medium text-center tab-active transition-colors flex items-center justify-center gap-2">
+                            <i class="fas fa-bullseye"></i> Anggaran
+                        </button>
+                        <button onclick="switchTab('transaksi')" id="tab-btn-transaksi" class="flex-1 min-w-[120px] py-4 px-6 text-sm font-medium text-center tab-inactive transition-colors flex items-center justify-center gap-2">
+                            <i class="fas fa-exchange-alt"></i> Transaksi
+                        </button>
+                        <button onclick="switchTab('laporan')" id="tab-btn-laporan" class="flex-1 min-w-[120px] py-4 px-6 text-sm font-medium text-center tab-inactive transition-colors flex items-center justify-center gap-2">
+                            <i class="fas fa-chart-pie"></i> Laporan
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TAB CONTENT: ANGGARAN -->
+                <div id="tab-content-anggaran" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8 animate-fade-in">
+                    <div class="max-w-xl mx-auto">
+                        <div class="text-center mb-8">
+                            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-600 mb-4">
+                                <i class="fas fa-wallet text-2xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-800">Alokasi Anggaran</h3>
+                            <p class="text-gray-500 mt-1">Tentukan total anggaran yang diberikan kepada komisi ini.</p>
+                        </div>
+
+                        <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                            <label for="input-anggaran" class="block text-sm font-medium text-gray-700 mb-2">Total Anggaran (Rp)</label>
+                            <div class="relative rounded-md shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-500 sm:text-sm">Rp</span>
+                                </div>
+                                <input type="text" id="input-anggaran" class="focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 pr-4 py-3 sm:text-lg border-gray-300 rounded-lg transition-colors font-semibold" placeholder="0" onkeyup="formatInputRupiah(this)">
+                            </div>
+                            <button onclick="saveAnggaran()" class="mt-4 w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
+                                <i class="fas fa-save mr-2 mt-0.5"></i> Simpan Anggaran
+                            </button>
+                        </div>
+                        
+                        <!-- Notification Toast -->
+                        <div id="anggaran-toast" class="mt-4 p-4 bg-green-50 text-green-700 rounded-lg hidden flex items-center gap-3">
+                            <i class="fas fa-check-circle"></i>
+                            <span class="font-medium">Anggaran berhasil diperbarui.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB CONTENT: TRANSAKSI -->
+                <div id="tab-content-transaksi" class="hidden bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden animate-fade-in">
+                    <div class="p-6 border-b border-gray-200 bg-gray-50">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                            <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                                <i class="fas fa-plus-circle text-primary-600"></i> Tambah Transaksi Baru
+                            </h3>
+                            <button onclick="exportExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm">
+                                <i class="fas fa-file-excel"></i> Export CSV/Excel
+                            </button>
+                        </div>
+                        <form id="form-transaksi" onsubmit="handleFormSubmit(event)" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+                            <div class="lg:col-span-1">
+                                <label for="trans-tanggal" class="block text-xs font-medium text-gray-700 mb-1">Tanggal</label>
+                                <input type="date" id="trans-tanggal" required class="w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5">
+                            </div>
+                            <div class="lg:col-span-1">
+                                <label for="trans-jenis" class="block text-xs font-medium text-gray-700 mb-1">Jenis Transaksi</label>
+                                <select id="trans-jenis" required class="w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5">
+                                    <option value="pengeluaran">Pengeluaran</option>
+                                    <option value="pemasukan">Pemasukan</option>
+                                </select>
+                            </div>
+                            <div class="lg:col-span-1">
+                                <label for="trans-nominal" class="block text-xs font-medium text-gray-700 mb-1">Nominal (Rp)</label>
+                                <input type="text" id="trans-nominal" required class="w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5" placeholder="0" onkeyup="formatInputRupiah(this)">
+                            </div>
+                            <div class="lg:col-span-1 md:col-span-2 lg:col-span-1">
+                                <label for="trans-keterangan" class="block text-xs font-medium text-gray-700 mb-1">Keterangan / Rincian</label>
+                                <input type="text" id="trans-keterangan" required class="w-full bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5" placeholder="Misal: Beli konsumsi rapat">
+                            </div>
+                            <div class="lg:col-span-1 md:col-span-2">
+                                <button type="submit" class="w-full text-white bg-gray-800 hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">
+                                    <i class="fas fa-plus mr-1"></i> Tambah
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="p-0">
+                        <div class="table-container overflow-x-auto w-full">
+                            <table class="w-full text-sm text-left text-gray-500 min-w-[800px]">
+                                <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-4 w-16 text-center">No</th>
+                                        <th scope="col" class="px-6 py-4 w-32">Tanggal</th>
+                                        <th scope="col" class="px-6 py-4">Keterangan</th>
+                                        <th scope="col" class="px-6 py-4 w-40 text-right">Pemasukan</th>
+                                        <th scope="col" class="px-6 py-4 w-40 text-right">Pengeluaran</th>
+                                        <th scope="col" class="px-6 py-4 w-24 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabel-transaksi-body">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB CONTENT: LAPORAN -->
+                <div id="tab-content-laporan" class="hidden flex-col gap-6 animate-fade-in">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 border-l-4 border-l-blue-500">
+                            <p class="text-sm font-medium text-gray-500 truncate mb-1">Anggaran Ditetapkan</p>
+                            <p id="lap-anggaran" class="text-2xl font-bold text-gray-900">Rp 0</p>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 border-l-4 border-l-green-500">
+                            <p class="text-sm font-medium text-gray-500 truncate mb-1">Total Pemasukan</p>
+                            <p id="lap-pemasukan" class="text-2xl font-bold text-green-600">Rp 0</p>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 border-l-4 border-l-red-500">
+                            <p class="text-sm font-medium text-gray-500 truncate mb-1">Total Pengeluaran</p>
+                            <p id="lap-pengeluaran" class="text-2xl font-bold text-red-600">Rp 0</p>
+                        </div>
+                        <div id="card-saldo" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 border-l-4">
+                            <p class="text-sm font-medium text-gray-500 truncate mb-1">Sisa Dana (Saldo)</p>
+                            <p id="lap-saldo" class="text-2xl font-bold">Rp 0</p>
+                            <p id="lap-saldo-desc" class="text-xs mt-1 text-gray-500">Total Pemasukan - Total Pengeluaran</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                            <h3 class="text-lg font-bold text-gray-800">Rekapitulasi Keuangan</h3>
+                            <button onclick="window.print()" class="text-sm text-primary-600 hover:text-primary-800 font-medium flex items-center gap-1">
+                                <i class="fas fa-print"></i> Cetak/PDF
+                            </button>
+                        </div>
+                        <div class="p-6">
+                            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                                <table class="w-full text-sm text-left text-gray-700">
+                                    <tbody class="divide-y divide-gray-200">
+                                        <tr>
+                                            <td class="px-6 py-4 font-medium bg-gray-50 w-1/2">Total Anggaran (Hanya Catatan)</td>
+                                            <td class="px-6 py-4 text-right font-medium text-gray-500" id="rekap-anggaran">Rp 0</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-6 py-4 font-medium bg-gray-50">Total Pemasukan</td>
+                                            <td class="px-6 py-4 text-right font-bold text-green-600" id="rekap-pemasukan">Rp 0</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-6 py-4 font-medium bg-gray-50">Total Pengeluaran / Realisasi</td>
+                                            <td class="px-6 py-4 text-right font-bold text-red-600" id="rekap-pengeluaran">Rp 0</td>
+                                        </tr>
+                                        <tr class="border-t-2 border-gray-300">
+                                            <td class="px-6 py-4 font-bold text-base">Sisa Saldo Kas</td>
+                                            <td class="px-6 py-4 text-right font-bold text-base" id="rekap-saldo">Rp 0</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mt-6 text-center text-sm text-gray-500">
+                                Laporan dihasilkan secara otomatis oleh Sistem LPJ Keuangan.<br>
+                                Tanggal cetak: <span id="print-date"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="bg-white border-t border-gray-200 mt-auto">
+            <div class="max-w-7xl mx-auto px-4 py-4 text-center text-sm text-gray-500">
+                &copy; <span id="current-year"></span> Sistem Aplikasi LPJ Keuangan. Data disimpan secara lokal di browser.
+            </div>
+        </footer>
+    </div>
+
+   <script>
+    // MASUKKAN URL WEB APP EXEC KAMU DI SINI
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwADCpmrYUfUY1fWPJA_Zl3Z6J0lkEUvtNNd-YbS0ou2PcbIfcT7h_tmDwNd7GzFdaI/exec";
+
+    const DAFTAR_SEKSI = [
+        "Seksi Acara", 
+        "Seksi Dekorasi dan Perlengkapan", 
+        "Seksi Publikasi dan Dokumentasi", 
+        "SMKA", 
+        "Seksi Konsumsi", 
+        "Seksi Keamanan", 
+        "Sekretariat", 
+        "Seksi Dana Usaha"
+    ];
+
+    let appData = {};
+    let currentState = {
+        activeSeksi: null,
+        activeTab: 'anggaran'
+    };
+
+    DAFTAR_SEKSI.forEach(seksi => {
+        appData[seksi] = {
+            anggaran: 0,
+            transaksi: []
+        };
+    });
+
+    function formatRupiah(number) {
+        if (number === 0) return 'Rp 0';
+        if (!number) return '';
+        let isNegative = number < 0;
+        let absNumber = Math.abs(number);
+        let formatted = new Intl.NumberFormat('id-ID').format(absNumber);
+        return isNegative ? `-Rp ${formatted}` : `Rp ${formatted}`;
+    }
+
+    function unformatRupiah(rupiahString) {
+        if (!rupiahString) return 0;
+        let cleanString = rupiahString.replace(/[^,\d]/g, '');
+        return parseInt(cleanString, 10) || 0;
+    }
+
+    function formatInputRupiah(inputElement) {
+        let val = inputElement.value.replace(/[^,\d]/g, '');
+        if (val === '') {
+            inputElement.value = '';
+            return;
+        }
+        inputElement.value = new Intl.NumberFormat('id-ID').format(parseInt(val, 10));
+    }
+
+    function generateId() {
+        const today = new Date();
+        const dateStr = today.toISOString().split('T')[0].replace(/-/g, '');
+        const randomNum = Math.floor(100 + Math.random() * 900);
+        return `TRX-${dateStr}-${randomNum}`;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+        
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('print-date').textContent = new Date().toLocaleDateString('id-ID', options);
+        
+        const selector = document.getElementById('seksi-selector');
+        DAFTAR_SEKSI.forEach(seksi => {
+            let option = document.createElement('option');
+            option.value = seksi;
+            option.textContent = seksi;
+            selector.appendChild(option);
+        });
+        
+        document.getElementById('trans-tanggal').valueAsDate = new Date();
+
+        // Load data awal via API fetch
+        fetch(SCRIPT_URL + "?action=getInitialData")
+            .then(res => res.json())
+            .then(dataDariSheets => {
+                if (dataDariSheets) {
+                    appData = dataDariSheets;
+                    console.log("Data berhasil dimuat dari Google Sheets!");
+                    if (currentState.activeSeksi) {
+                        switchTab(currentState.activeTab);
+                    }
+                }
+            })
+            .catch(err => console.error("Gagal mengambil data dari Google Sheets:", err));
+    });
+
+    function changeSeksi(seksiName) {
+        if (!seksiName) return;
+        currentState.activeSeksi = seksiName;
+        
+        document.getElementById('empty-state').classList.add('hidden');
+        document.getElementById('dashboard-content').classList.remove('hidden');
+        document.getElementById('dashboard-content').classList.add('flex');
+        document.getElementById('active-seksi-title').textContent = seksiName;
+        switchTab('anggaran');
+    }
+
+    function switchTab(tabName) {
+        currentState.activeTab = tabName;
+        
+        const tabs = ['anggaran', 'transaksi', 'laporan'];
+        tabs.forEach(t => {
+            const btn = document.getElementById(`tab-btn-${t}`);
+            if (t === tabName) {
+                btn.classList.remove('tab-inactive');
+                btn.classList.add('tab-active');
+                btn.style.backgroundColor = '#eff6ff'; 
+            } else {
+                btn.classList.add('tab-inactive');
+                btn.classList.remove('tab-active');
+                btn.style.backgroundColor = 'transparent';
+            }
+        });
+
+        tabs.forEach(t => {
+            const content = document.getElementById(`tab-content-${t}`);
+            if (t === tabName) {
+                content.classList.remove('hidden');
+            } else {
+                content.classList.add('hidden');
+            }
+        });
+
+        if (tabName === 'anggaran') renderAnggaran();
+        if (tabName === 'transaksi') renderTransaksi();
+        if (tabName === 'laporan') renderLaporan();
+    }
+
+    function renderAnggaran() {
+        const seksi = currentState.activeSeksi;
+        const currentAnggaran = appData[seksi].anggaran;
+        const inputEl = document.getElementById('input-anggaran');
+        
+        if (currentAnggaran > 0) {
+            inputEl.value = new Intl.NumberFormat('id-ID').format(currentAnggaran);
+        } else {
+            inputEl.value = '';
+        }
+    }
+
+    function saveAnggaran() {
+        const seksi = currentState.activeSeksi;
+        const inputEl = document.getElementById('input-anggaran');
+        const nominal = unformatRupiah(inputEl.value);
+        
+        appData[seksi].anggaran = nominal;
+
+        // Kirim ke Google Sheets via fetch API
+        fetch(SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                action: "saveAnggaran",
+                seksi: seksi,
+                nominal: nominal
+            })
+        }).then(() => {
+            const toast = document.getElementById('anggaran-toast');
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        });
+        
+        if(nominal > 0) { 
+            inputEl.value = new Intl.NumberFormat('id-ID').format(nominal);
+        }
+    }
+
+    function renderTransaksi() {
+        const seksi = currentState.activeSeksi;
+        const tbody = document.getElementById('tabel-transaksi-body');
+        const transaksiList = appData[seksi].transaksi;
+        
+        tbody.innerHTML = ''; 
+        
+        if (transaksiList.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="px-6 py-8 text-center text-gray-500 italic">
+                        Belum ada transaksi tercatat.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        const sortedList = [...transaksiList].sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+
+        sortedList.forEach((trx, index) => {
+            const tr = document.createElement('tr');
+            tr.className = "bg-white border-b hover:bg-gray-50 transition-colors";
+            
+            const tgl = new Date(trx.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' });
+            
+            let inHtml = trx.jenis === 'pemasukan' ? `<span class="text-green-600 font-medium">+ ${formatRupiah(trx.nominal)}</span>` : '-';
+            let outHtml = trx.jenis === 'pengeluaran' ? `<span class="text-red-600 font-medium">- ${formatRupiah(trx.nominal)}</span>` : '-';
+
+            tr.innerHTML = `
+                <td class="px-6 py-4 text-center font-medium">${index + 1}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${tgl}</td>
+                <td class="px-6 py-4">
+                    <div class="font-medium text-gray-900">${trx.keterangan}</div>
+                    <div class="text-xs text-gray-500 capitalize mt-0.5 inline-block px-2 py-0.5 rounded-full ${trx.jenis === 'pemasukan' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${trx.jenis}</div>
+                </td>
+                <td class="px-6 py-4 text-right">${inHtml}</td>
+                <td class="px-6 py-4 text-right">${outHtml}</td>
+                <td class="px-6 py-4 text-center">
+                    <button onclick="hapusTransaksi('${trx.id}')" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors" title="Hapus">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function handleFormSubmit(event) {
+        event.preventDefault(); 
+        
+        const seksi = currentState.activeSeksi;
+        if(!seksi) return;
+
+        const tanggal = document.getElementById('trans-tanggal').value;
+        const jenis = document.getElementById('trans-jenis').value;
+        const keterangan = document.getElementById('trans-keterangan').value;
+        const nominalStr = document.getElementById('trans-nominal').value;
+        const nominal = unformatRupiah(nominalStr);
+
+        if (nominal <= 0) {
+            const nomEl = document.getElementById('trans-nominal');
+            nomEl.classList.add('border-red-500');
+            setTimeout(() => nomEl.classList.remove('border-red-500'), 2000);
+            return;
+        }
+
+        const newTransaksi = {
+            id: generateId(),
+            tanggal: tanggal,
+            jenis: jenis,
+            keterangan: keterangan,
+            nominal: nominal
+        };
+
+        // Simpan ke local state
+        appData[seksi].transaksi.push(newTransaksi);
+        renderTransaksi();
+
+        // Kirim ke Google Sheets via fetch API
+        fetch(SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                action: "addTransaksi",
+                seksi: seksi,
+                data: newTransaksi
+            })
+        });
+
+        document.getElementById('trans-keterangan').value = '';
+        document.getElementById('trans-nominal').value = '';
+    }
+
+    function hapusTransaksi(id) {
+        const seksi = currentState.activeSeksi;
+        appData[seksi].transaksi = appData[seksi].transaksi.filter(trx => trx.id !== id);
+        renderTransaksi();
+
+        // Hapus dari Google Sheets via fetch API
+        fetch(SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                action: "deleteTransaksi",
+                id: id
+            })
+        });
+    }
+
+    function renderLaporan() {
+        const seksi = currentState.activeSeksi;
+        const dataSeksi = appData[seksi];
+        
+        const anggaran = dataSeksi.anggaran || 0;
+        let totalPemasukan = 0;
+        let totalPengeluaran = 0;
+
+        dataSeksi.transaksi.forEach(trx => {
+            if (trx.jenis === 'pemasukan') {
+                totalPemasukan += trx.nominal;
+            } else if (trx.jenis === 'pengeluaran') {
+                totalPengeluaran += trx.nominal;
+            }
+        });
+        const saldo = totalPemasukan - totalPengeluaran;
+
+        document.getElementById('lap-anggaran').textContent = formatRupiah(anggaran);
+        document.getElementById('lap-pemasukan').textContent = formatRupiah(totalPemasukan);
+        document.getElementById('lap-pengeluaran').textContent = formatRupiah(totalPengeluaran);
+        
+        const saldoEl = document.getElementById('lap-saldo');
+        const cardSaldo = document.getElementById('card-saldo');
+        
+        saldoEl.textContent = formatRupiah(saldo);
+        
+        if (saldo < 0) {
+            saldoEl.classList.remove('text-gray-900', 'text-green-600');
+            saldoEl.classList.add('text-red-600');
+            cardSaldo.classList.remove('border-l-gray-300', 'border-l-green-500');
+            cardSaldo.classList.add('border-l-red-500');
+        } else {
+            saldoEl.classList.remove('text-red-600', 'text-gray-900');
+            saldoEl.classList.add('text-green-600');
+            cardSaldo.classList.remove('border-l-gray-300', 'border-l-red-500');
+            cardSaldo.classList.add('border-l-green-500');
+        }
+        document.getElementById('rekap-anggaran').textContent = formatRupiah(anggaran);
+        document.getElementById('rekap-pemasukan').textContent = formatRupiah(totalPemasukan);
+        document.getElementById('rekap-pengeluaran').textContent = formatRupiah(totalPengeluaran);
+        
+        const rekapSaldo = document.getElementById('rekap-saldo');
+        rekapSaldo.textContent = formatRupiah(saldo);
+        if(saldo < 0) {
+             rekapSaldo.classList.add('text-red-600');
+             rekapSaldo.classList.remove('text-green-600');
+        } else {
+             rekapSaldo.classList.add('text-green-600');
+             rekapSaldo.classList.remove('text-red-600');
+        }
+    }
+
+     function generatePDFGabungan() {
+            let totalAnggaranSemua = 0;
+            let totalPemasukanSemua = 0;
+            let totalPengeluaranSemua = 0;
+
+            let barisTabelHTML = '';
+
+            DAFTAR_SEKSI.forEach((seksi, idx) => {
+                let anggaran = appData[seksi]?.anggaran || 0;
+                let masuk = 0;
+                let keluar = 0;
+
+                (appData[seksi]?.transaksi || []).forEach(trx => {
+                    if (trx.jenis === 'pemasukan') masuk += trx.nominal;
+                    if (trx.jenis === 'pengeluaran') keluar += trx.nominal;
+                });
+
+                let saldo = masuk - keluar;
+
+                totalAnggaranSemua += anggaran;
+                totalPemasukanSemua += masuk;
+                totalPengeluaranSemua += keluar;
+
+                barisTabelHTML += `
+                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                        <td style="padding: 8px; text-align: center;">${idx + 1}</td>
+                        <td style="padding: 8px; font-weight: 500;">${seksi}</td>
+                        <td style="padding: 8px; text-align: right;">${formatRupiah(anggaran)}</td>
+                        <td style="padding: 8px; text-align: right; color: #16a34a;">${formatRupiah(masuk)}</td>
+                        <td style="padding: 8px; text-align: right; color: #dc2626;">${formatRupiah(keluar)}</td>
+                        <td style="padding: 8px; text-align: right; font-weight: bold; color: ${saldo < 0 ? '#dc2626' : '#16a34a'};">${formatRupiah(saldo)}</td>
+                    </tr>
+                `;
+            });
+
+            let totalSaldoSemua = totalPemasukanSemua - totalPengeluaranSemua;
+            let tglCetak = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+            const element = document.createElement('div');
+            element.style.padding = '20px';
+            element.style.fontFamily = 'sans-serif';
+            element.style.color = '#1f2937';
+
+            element.innerHTML = `
+                <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #2563eb; padding-bottom: 10px;">
+                    <h2 style="margin: 0; font-size: 20px; text-transform: uppercase; color: #1e3a8a;">Laporan Pertanggungjawaban (LPJ) Keuangan</h2>
+                    <p style="margin: 5px 0 0 0; font-size: 14px; color: #4b5563;">Rekapitulasi Gabungan Seluruh Seksi / Komisi Kepanitiaan</p>
+                    <p style="margin: 2px 0 0 0; font-size: 11px; color: #6b7280;">Dicetak pada: ${tglCetak}</p>
+                </div>
+
+                <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 20px;">
+                    <thead>
+                        <tr style="background-color: #2563eb; color: white;">
+                            <th style="padding: 8px; text-align: center;">No</th>
+                            <th style="padding: 8px; text-align: left;">Nama Seksi / Komisi</th>
+                            <th style="padding: 8px; text-align: right;">Anggaran</th>
+                            <th style="padding: 8px; text-align: right;">Real. Pemasukan</th>
+                            <th style="padding: 8px; text-align: right;">Real. Pengeluaran</th>
+                            <th style="padding: 8px; text-align: right;">Sisa Saldo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${barisTabelHTML}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background-color: #f3f4f6; font-weight: bold; border-top: 2px solid #1f2937;">
+                            <td colspan="2" style="padding: 10px; text-align: center;">TOTAL KESELURUHAN</td>
+                            <td style="padding: 10px; text-align: right;">${formatRupiah(totalAnggaranSemua)}</td>
+                            <td style="padding: 10px; text-align: right; color: #16a34a;">${formatRupiah(totalPemasukanSemua)}</td>
+                            <td style="padding: 10px; text-align: right; color: #dc2626;">${formatRupiah(totalPengeluaranSemua)}</td>
+                            <td style="padding: 10px; text-align: right; color: ${totalSaldoSemua < 0 ? '#dc2626' : '#16a34a'};">${formatRupiah(totalSaldoSemua)}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <div style="margin-top: 40px; display: flex; justify-content: space-between; font-size: 12px; text-align: center;">
+                    <div style="width: 40%;">
+                        <p>Mengetahui,<br><b>Ketua Panitia</b></p>
+                        <br><br><br>
+                        <p>( _______________________ )</p>
+                    </div>
+                    <div style="width: 40%;">
+                        <p>Dibuat oleh,<br><b>Bendahara Panitia</b></p>
+                        <br><br><br>
+                        <p>( _______________________ )</p>
+                    </div>
+                </div>
+            `;
+
+            const opt = {
+                margin:       10,
+                filename:     `LPJ_Gabungan_Kepanitiaan_${new Date().toISOString().split('T')[0]}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+            };
+
+            if (typeof html2pdf !== 'undefined') {
+                html2pdf().set(opt).from(element).save();
+            } else {
+                alert('Library pencetak PDF sedang dimuat, silakan tunggu sebentar dan coba lagi.');
+            }
+        }
+       
+    function exportExcel() {
+        const seksi = currentState.activeSeksi;
+        if (!seksi) return;
+
+        const dataSeksi = appData[seksi];
+        let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; 
+        csvContent += "No;Tanggal;Keterangan;Pemasukan;Pengeluaran;Sisa Saldo\r\n";
+        let runningSaldo = 0;
+        const sortedList = [...dataSeksi.transaksi].sort((a, b) => new Date(a.tanggal) - new Date(a.tanggal));
+
+        sortedList.forEach((trx, index) => {
+            let pemasukan = trx.jenis === 'pemasukan' ? trx.nominal : 0;
+            let pengeluaran = trx.jenis === 'pengeluaran' ? trx.nominal : 0;
+            
+            runningSaldo += pemasukan;
+            runningSaldo -= pengeluaran;
+            let ket = `"${trx.keterangan.replace(/"/g, '""')}"`;
+            
+            csvContent += `${index + 1};${trx.tanggal};${ket};${pemasukan};${pengeluaran};${runningSaldo}\r\n`;
+        });
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        const safeSeksiName = seksi.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        const dateNow = new Date().toISOString().split('T')[0];
+        link.setAttribute("download", `Laporan_Transaksi_${safeSeksiName}_${dateNow}.csv`);
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+</body>
+</html>
