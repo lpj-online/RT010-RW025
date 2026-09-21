@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Aplikasi LPJ</title>
+    <title>Sistem Aplikasi LPJ Keuangan Kepanitiaan</title>
     <link rel="icon" href="https://fav.farm/📊">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -84,9 +84,9 @@
                         </button>
                         <!-- Section Selector -->
                         <div class="flex items-center gap-2">
-                            <label for="seksi-selector" class="text-sm font-medium text-gray-700 hidden sm:block">Pilih Panpel:</label>
+                            <label for="seksi-selector" class="text-sm font-medium text-gray-700 hidden sm:block">Pilih Komisi:</label>
                             <select id="seksi-selector" onchange="changeSeksi(this.value)" class="w-full sm:w-64 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5 shadow-sm transition-colors cursor-pointer">
-                                <option value="" disabled selected>-- Pilih Panpel/Seksi --</option>
+                                <option value="" disabled selected>-- Pilih Komisi/Seksi --</option>
                             </select>
                         </div>
                     </div>
@@ -102,8 +102,8 @@
                 <div class="bg-blue-50 text-blue-500 p-4 rounded-full mb-4">
                     <i class="fas fa-hand-pointer text-4xl"></i>
                 </div>
-                <h2 class="text-2xl font-semibold text-gray-800 mb-2">Belum Ada Panpel Terpilih</h2>
-                <p class="text-gray-500 max-w-md">Silakan pilih Panpel (seksi) pada menu dropdown di bagian atas untuk mulai mengelola anggaran dan transaksi.</p>
+                <h2 class="text-2xl font-semibold text-gray-800 mb-2">Belum Ada Komisi Terpilih</h2>
+                <p class="text-gray-500 max-w-md">Silakan pilih komisi (seksi) pada menu dropdown di bagian atas untuk mulai mengelola anggaran dan transaksi.</p>
             </div>
 
             <!-- Dashboard Content -->
@@ -114,7 +114,7 @@
                     <div class="px-6 py-5 border-b border-gray-200 bg-gray-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
                             <h2 id="active-seksi-title" class="text-2xl font-bold text-gray-800">Nama Seksi</h2>
-                            <p class="text-sm text-gray-500 mt-1">Kelola data keuangan untuk Panpel ini</p>
+                            <p class="text-sm text-gray-500 mt-1">Kelola data keuangan untuk komisi ini</p>
                         </div>
                     </div>
                     
@@ -140,7 +140,7 @@
                                 <i class="fas fa-wallet text-2xl"></i>
                             </div>
                             <h3 class="text-xl font-bold text-gray-800">Alokasi Anggaran</h3>
-                            <p class="text-gray-500 mt-1">Tentukan total anggaran yang diberikan kepada Panpel ini.</p>
+                            <p class="text-gray-500 mt-1">Tentukan total anggaran yang diberikan kepada komisi ini.</p>
                         </div>
 
                         <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
@@ -296,18 +296,17 @@
 
    <script>
     // MASUKKAN URL WEB APP EXEC KAMU DI SINI
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyoZ31Fz1E2n3m9WuAaRve1QkAiiSEIo5LZIyboK6ln77uOw7rSIeRTLhiEPekR5_1c/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwADCpmrYUfUY1fWPJA_Zl3Z6J0lkEUvtNNd-YbS0ou2PcbIfcT7h_tmDwNd7GzFdaI/exec";
 
     const DAFTAR_SEKSI = [
-        "Panitia Pembangunan Lingkungan", 
-        "Seksi Perencanaan & Logistik (Material)", 
-        "Seksi Pembangunan / Teknis Lapangan", 
+        "Seksi Acara", 
+        "Seksi Dekorasi dan Perlengkapan", 
+        "Seksi Publikasi dan Dokumentasi", 
+        "SMKA", 
         "Seksi Konsumsi", 
         "Seksi Keamanan", 
-        "Seksi Dana Usaha (Danus)", 
-        "Sumbangan Developer (Dev)"
-        "Sumbangan Parpol (Parpol)"
-        "Iuran Warga"
+        "Sekretariat", 
+        "Seksi Dana Usaha"
     ];
 
     let appData = {};
@@ -679,7 +678,7 @@
             element.innerHTML = `
                 <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #2563eb; padding-bottom: 10px;">
                     <h2 style="margin: 0; font-size: 20px; text-transform: uppercase; color: #1e3a8a;">Laporan Pertanggungjawaban (LPJ) Keuangan</h2>
-                    <p style="margin: 5px 0 0 0; font-size: 14px; color: #4b5563;">Rekapitulasi Gabungan Seluruh Seksi / Panpel Kepanitiaan</p>
+                    <p style="margin: 5px 0 0 0; font-size: 14px; color: #4b5563;">Rekapitulasi Gabungan Seluruh Seksi / Komisi Kepanitiaan</p>
                     <p style="margin: 2px 0 0 0; font-size: 11px; color: #6b7280;">Dicetak pada: ${tglCetak}</p>
                 </div>
 
@@ -687,7 +686,7 @@
                     <thead>
                         <tr style="background-color: #2563eb; color: white;">
                             <th style="padding: 8px; text-align: center;">No</th>
-                            <th style="padding: 8px; text-align: left;">Nama Seksi / Panpel</th>
+                            <th style="padding: 8px; text-align: left;">Nama Seksi / Komisi</th>
                             <th style="padding: 8px; text-align: right;">Anggaran</th>
                             <th style="padding: 8px; text-align: right;">Real. Pemasukan</th>
                             <th style="padding: 8px; text-align: right;">Real. Pengeluaran</th>
