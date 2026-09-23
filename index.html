@@ -12,6 +12,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Pustaka untuk Ekspor Excel dengan Format Kustom -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -733,37 +735,76 @@
             }
         }
        
-    function exportExcel() {
-        const seksi = currentState.activeSeksi;
-        if (!seksi) return;
+   function exportExcel() {
+    const seksi = currentState.activeSeksi;
+    if (!seksi) return;
 
-        const dataSeksi = appData[seksi];
-        let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; 
-        csvContent += "No;Tanggal;Keterangan;Pemasukan;Pengeluaran;Sisa Saldo\r\n";
-        let runningSaldo = 0;
-        const sortedList = [...dataSeksi.transaksi].sort((a, b) => new Date(a.tanggal) - new Date(a.tanggal));
+    const dataSeksi = appData[seksi];
+    const transaksiList = dataSeksi.transaksi || [];
 
-        sortedList.forEach((trx, index) => {
-            let pemasukan = trx.jenis === 'pemasukan' ? trx.nominal : 0;
-            let pengeluaran = trx.jenis === 'pengeluaran' ? trx.nominal : 0;
-            
-            runningSaldo += pemasukan;
-            runningSaldo -= pengeluaran;
-            let ket = `"${trx.keterangan.replace(/"/g, '""')}"`;
-            
-            csvContent += `${index + 1};${trx.tanggal};${ket};${pemasukan};${pengeluaran};${runningSaldo}\r\n`;
-        });
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        const safeSeksiName = seksi.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-        const dateNow = new Date().toISOString().split('T')[0];
-        link.setAttribute("download", `Laporan_Transaksi_${safeSeksiName}_${dateNow}.csv`);
+    // 1. Tanggal Hari Ini (Format DD/MM/YYYY tanpa jam)
+    const today = new Date();
+    const tglCetak = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
+
+    // 2. Baris Judul Atas (Seperti Gambar Header Hijau)
+    const excelData = [
+        [`PENGAJUAN PENGGUNAAN DANA - ${seksi.toUpperCase()}`], // Row 1: Judul
+        [], // Row 2: Kosong
+        // Row 3: Header Kolom (Disesuaikan dengan kebutuhan RT/Komisi)
+        ["NO", "TANGGAL", "JENIS", "KETERANGAN / RINCIAN", "PEMASUKAN (Rp)", "PENGELUARAN (Rp)"]
+    ];
+
+    // 3. Masukkan Data Transaksi
+    transaksiList.forEach((trx, index) => {
+        // Tampilkan tanggal bersih
+        const tglClean = trx.tanggal ? trx.tanggal.split('T')[0] : '';
         
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-</script>
+        excelData.push([
+            index + 1,
+            tglClean,
+            trx.jenis.toUpperCase(),
+            trx.keterangan,
+            trx.jenis === 'pemasukan' ? trx.nominal : 0,
+            trx.jenis === 'pengeluaran' ? trx.nominal : 0
+        ]);
+    });
+
+    // 4. Tambahkan Baris Kosong & Area Tanda Tangan (Seperti Gambar)
+    excelData.push([]);
+    excelData.push([]);
+    excelData.push(["", "Disusun oleh,", "", "", "", "Mengetahui,"]);
+    excelData.push([]);
+    excelData.push([]);
+    excelData.push(["", "( ___________________ )", "", "", "", "( ___________________ )"]);
+    excelData.push([]);
+    
+    // 5. Catatan Kaki / Footnote Miring (Seperti Gambar)
+    excelData.push([`* Berkas gabungan sah digunakan sebagai bukti fisik penggunaan anggaran. Dicetak otomatis pada tanggal: ${tglCetak}`]);
+
+    // 6. Buat Sheet & Workbook Excel
+    const ws = XLSX.utils.aoa_to_sheet(excelData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "LPJ Keuangan");
+
+    // 7. Pengaturan Lebar Kolom Otomatis
+    ws['!cols'] = [
+        { wch: 6 },  // NO
+        { wch: 15 }, // TANGGAL
+        { wch: 15 }, // JENIS
+        { wch: 40 }, // KETERANGAN
+        { wch: 20 }, // PEMASUKAN
+        { wch: 20 }  // PENGELUARAN
+    ];
+
+    // 8. Merge Cell untuk Judul Atas
+    ws['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } } // Merge A1 sampai F1
+    ];
+
+    // 9. Unduh File Excel
+    const fileName = `LPJ_Keuangan_${seksi.replace(/\s+/g, '_')}_${tglCetak.replace(/\//g, '-')}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+}
+   </script>
 </body>
 </html>
