@@ -744,22 +744,22 @@
     const dataSeksi = appData[seksi];
     const transaksiList = dataSeksi.transaksi || [];
 
-    // 1. Tanggal Hari Ini (Format DD/MM/YYYY tanpa jam)
+    // Tanggal Cetak (DD/MM/YYYY)
     const today = new Date();
     const tglCetak = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
 
-    // 2. Baris Judul Atas (Seperti Gambar Header Hijau)
+    // Header Atas & Kolom Utama
     const excelData = [
-        [`PENGAJUAN PENGGUNAAN DANA - ${seksi.toUpperCase()}`], // Row 1: Judul
-        [], // Row 2: Kosong
-        // Row 3: Header Kolom (Disesuaikan dengan kebutuhan RT/Komisi)
+        [`PENGAJUAN PENGGUNAAN DANA - ${seksi.toUpperCase()}`], // Header Utama (Judul Hijau)
+        [], 
         ["NO", "TANGGAL", "JENIS", "KETERANGAN / RINCIAN", "PEMASUKAN (Rp)", "PENGELUARAN (Rp)"]
     ];
 
-    // 3. Masukkan Data Transaksi
+    // Isi Baris Transaksi
     transaksiList.forEach((trx, index) => {
-        // Tampilkan tanggal bersih
-        const tglClean = trx.tanggal ? trx.tanggal.split('T')[0] : '';
+        const rawDate = trx.tanggal ? trx.tanggal.split('T')[0] : '';
+        const parts = rawDate.split('-');
+        const tglClean = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : rawDate;
         
         excelData.push([
             index + 1,
@@ -771,7 +771,7 @@
         ]);
     });
 
-    // 4. Tambahkan Baris Kosong & Area Tanda Tangan (Seperti Gambar)
+    // Baris Tanda Tangan & Footnote Miring Seperti Gambar
     excelData.push([]);
     excelData.push([]);
     excelData.push(["", "Disusun oleh,", "", "", "", "Mengetahui,"]);
@@ -779,16 +779,14 @@
     excelData.push([]);
     excelData.push(["", "( ___________________ )", "", "", "", "( ___________________ )"]);
     excelData.push([]);
-    
-    // 5. Catatan Kaki / Footnote Miring (Seperti Gambar)
-    excelData.push([`* Berkas gabungan sah digunakan sebagai bukti fisik penggunaan anggaran. Dicetak otomatis pada tanggal: ${tglCetak}`]);
+    excelData.push([`* Berkas gabungan sah digunakan sebagai bukti fisik penggunaan anggaran unit kerja. Dicetak otomatis pada tanggal: ${tglCetak}`]);
 
-    // 6. Buat Sheet & Workbook Excel
+    // Format SheetJS
     const ws = XLSX.utils.aoa_to_sheet(excelData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "LPJ Keuangan");
 
-    // 7. Pengaturan Lebar Kolom Otomatis
+    // Atur Lebar Kolom
     ws['!cols'] = [
         { wch: 6 },  // NO
         { wch: 15 }, // TANGGAL
@@ -798,15 +796,14 @@
         { wch: 20 }  // PENGELUARAN
     ];
 
-    // 8. Merge Cell untuk Judul Atas
+    // Merge Cell untuk Judul Utama (Kolom A-F)
     ws['!merges'] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } } // Merge A1 sampai F1
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }
     ];
 
-    // 9. Unduh File Excel
+    // Unduh File Excel
     const fileName = `LPJ_Keuangan_${seksi.replace(/\s+/g, '_')}_${tglCetak.replace(/\//g, '-')}.xlsx`;
     XLSX.writeFile(wb, fileName);
-}
-   </script>
+}   </script>
 </body>
 </html>
