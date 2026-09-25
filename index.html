@@ -8,11 +8,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Library untuk Cetak PDF (html2pdf + Dependencies) -->
+   
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <!-- Pustaka untuk Ekspor Excel dengan Format Kustom -->
+
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script>
         tailwind.config = {
@@ -96,10 +96,8 @@
             </div>
         </header>
 
-        <!-- Main Content Area -->
         <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
             
-            <!-- Empty State -->
             <div id="empty-state" class="flex flex-col items-center justify-center py-20 text-center bg-white rounded-2xl shadow-sm border border-gray-100 h-full">
                 <div class="bg-blue-50 text-blue-500 p-4 rounded-full mb-4">
                     <i class="fas fa-hand-pointer text-4xl"></i>
@@ -108,7 +106,6 @@
                 <p class="text-gray-500 max-w-md">Silakan pilih komisi (seksi) pada menu dropdown di bagian atas untuk mulai mengelola anggaran dan transaksi.</p>
             </div>
 
-            <!-- Dashboard Content -->
             <div id="dashboard-content" class="hidden flex-col gap-6">
                 
                 <!-- Section Title & Tabs -->
@@ -120,7 +117,6 @@
                         </div>
                     </div>
                     
-                    <!-- Tabs Navigation -->
                     <div class="flex overflow-x-auto">
                         <button onclick="switchTab('anggaran')" id="tab-btn-anggaran" class="flex-1 min-w-[120px] py-4 px-6 text-sm font-medium text-center tab-active transition-colors flex items-center justify-center gap-2">
                             <i class="fas fa-bullseye"></i> Anggaran
@@ -157,8 +153,7 @@
                                 <i class="fas fa-save mr-2 mt-0.5"></i> Simpan Anggaran
                             </button>
                         </div>
-                        
-                        <!-- Notification Toast -->
+                      
                         <div id="anggaran-toast" class="mt-4 p-4 bg-green-50 text-green-700 rounded-lg hidden flex items-center gap-3">
                             <i class="fas fa-check-circle"></i>
                             <span class="font-medium">Anggaran berhasil diperbarui.</span>
@@ -166,7 +161,6 @@
                     </div>
                 </div>
 
-                <!-- TAB CONTENT: TRANSAKSI -->
                 <div id="tab-content-transaksi" class="hidden bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden animate-fade-in">
                     <div class="p-6 border-b border-gray-200 bg-gray-50">
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
@@ -225,7 +219,6 @@
                     </div>
                 </div>
 
-                <!-- TAB CONTENT: LAPORAN -->
                 <div id="tab-content-laporan" class="hidden flex-col gap-6 animate-fade-in">
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 border-l-4 border-l-blue-500">
@@ -297,7 +290,7 @@
     </div>
 
    <script>
-    // MASUKKAN URL WEB APP EXEC KAMU DI SINI
+ 
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyoZ31Fz1E2n3m9WuAaRve1QkAiiSEIo5LZIyboK6ln77uOw7rSIeRTLhiEPekR5_1c/exec";
 
     const DAFTAR_SEKSI = [
