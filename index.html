@@ -785,74 +785,108 @@ function renderTransaksi() {
 }
 
 // 2. EXPORT EXCEL DENGAN LAYOUT MODEL GAMBAR ACUAN
+// 1. FUNGSI PEMBANTU: MEMBUAT NAMA TAB AMAN DI EXCEL
+function createSafeSheetName(name, usedSet) {
+  let cleanName = String(name || "Sheet")
+    .replace(/[\\/*?:\[\]]/g, "") // Hapus karakter terlarang Excel
+    .trim()
+    .substring(0, 30); // Maksimal 30-31 karakter
+
+  if (!cleanName) cleanName = "Sheet";
+
+  let finalName = cleanName;
+  let counter = 1;
+
+  while (usedSet.has(finalName)) {
+    finalName = `${cleanName.substring(0, 25)}_${counter}`;
+    counter++;
+  }
+
+  usedSet.add(finalName);
+  return finalName;
+}
+
+// 2. FUNGSI UTAMA: EKSPOR MULTI-SHEET EXCEL LPJ
 function exportExcel() {
-    const seksi = currentState.activeSeksi;
-    if (!seksi) return;
+  // Pastikan library xlsx-js-style sudah dimuat
+  if (typeof XLSX === "undefined") {
+    alert("Library Excel sedang dimuat, silakan coba beberapa saat lagi.");
+    return;
+  }
 
+  const workbook = XLSX.utils.book_new();
+  const usedSheetNames = new Set();
+  const today = new Date();
+  const tglCetak = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
+
+  // Loop setiap seksi/panitia di appData
+  DAFTAR_SEKSI.forEach(seksi => {
     const dataSeksi = appData[seksi];
-    const transaksiList = dataSeksi.transaksi || [];
+    const transaksiList = dataSeksi ? (dataSeksi.transaksi || []) : [];
 
-    // Tanggal Cetak (DD/MM/YYYY)
-    const today = new Date();
-    const tglCetak = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
-
-    // Header Atas & Kolom Utama
-    const excelData = [
-        [`PENGAJUAN PENGGUNAAN DANA - ${seksi.toUpperCase()}`], // Header Utama (Judul Hijau)
-        [], 
-        ["NO", "TANGGAL", "JENIS", "KETERANGAN / RINCIAN", "PEMASUKAN (Rp)", "PENGELUARAN (Rp)"]
+    // Header Laporan per Seksi
+    const rows = [
+      [`PENGAJUAN PENGGUNAAN DANA - ${seksi.toUpperCase()}`],
+      [],
+      ["NO", "TANGGAL", "JENIS", "KETERANGAN / RINCIAN", "PEMASUKAN (Rp)", "PENGELUARAN (Rp)"]
     ];
 
     // Isi Baris Transaksi
     transaksiList.forEach((trx, index) => {
-        const rawDate = trx.tanggal ? trx.tanggal.split('T')[0] : '';
-        const parts = rawDate.split('-');
-        const tglClean = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : rawDate;
-        
-        excelData.push([
-            index + 1,
-            tglClean,
-            trx.jenis.toUpperCase(),
-            trx.keterangan,
-            trx.jenis === 'pemasukan' ? trx.nominal : 0,
-            trx.jenis === 'pengeluaran' ? trx.nominal : 0
-        ]);
+      const rawDate = trx.tanggal ? trx.tanggal.split('T')[0] : '';
+      const parts = rawDate.split('-');
+      const tglClean = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : rawDate;
+
+      rows.push([
+        index + 1,
+        tglClean,
+        trx.jenis.toUpperCase(),
+        trx.keterangan,
+        trx.jenis === 'pemasukan' ? trx.nominal : 0,
+        trx.jenis === 'pengeluaran' ? trx.nominal : 0
+      ]);
     });
 
-    // Baris Tanda Tangan & Footnote Miring Seperti Gambar
-    excelData.push([]);
-    excelData.push([]);
-    excelData.push(["", "Disusun oleh,", "", "", "", "Mengetahui,"]);
-    excelData.push([]);
-    excelData.push([]);
-    excelData.push(["", "( ___________________ )", "", "", "", "( ___________________ )"]);
-    excelData.push([]);
-    excelData.push([`* Berkas gabungan sah digunakan sebagai bukti fisik penggunaan anggaran unit kerja. Dicetak otomatis pada tanggal: ${tglCetak}`]);
+    // Spasi sebelum tanda tangan
+    rows.push([]);
 
-    // Format SheetJS
-    const ws = XLSX.utils.aoa_to_sheet(excelData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "LPJ Keuangan");
+    // Baris Tanda Tangan
+    let rowSign1 = new Array(6).fill("");
+    rowSign1[1] = "Disusun oleh,";
+    rowSign1[4] = "Mengetahui,";
+    rows.push(rowSign1);
 
-    // Atur Lebar Kolom
-    ws['!cols'] = [
-        { wch: 6 },  // NO
-        { wch: 15 }, // TANGGAL
-        { wch: 15 }, // JENIS
-        { wch: 40 }, // KETERANGAN
-        { wch: 20 }, // PEMASUKAN
-        { wch: 20 }  // PENGELUARAN
-    ];
+    // Ruang Kosong Tanda Tangan
+    rows.push(new Array(6).fill(""));
+    rows.push(new Array(6).fill(""));
 
-    // Merge Cell untuk Judul Utama (Kolom A-F)
-    ws['!merges'] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }
-    ];
+    // Nama/Garis Tanda Tangan
+    let rowSign2 = new Array(6).fill("");
+    rowSign2[1] = "( ____________________ )";
+    rowSign2[4] = "( ____________________ )";
+    rows.push(rowSign2);
 
-    // Unduh File Excel
-    const fileName = `LPJ_Keuangan_${seksi.replace(/\s+/g, '_')}_${tglCetak.replace(/\//g, '-')}.xlsx`;
-    XLSX.writeFile(wb, fileName);
-}   
+    // Spasi & Footnote
+    rows.push([]);
+    rows.push([
+      `* Berkas gabungan sah digunakan sebagai bukti fisik penggunaan anggaran unit kerja. Dicetak otomatis pada tanggal: ${tglCetak}`
+    ]);
+
+    // Buat Worksheet & Terapkan Style
+    const worksheet = XLSX.utils.aoa_to_sheet(rows);
+    applyExcelStylesRT(worksheet, rows);
+
+    // Pengaturan Tampilan Sheet
+    worksheet["!views"] = [{ showGridLines: true, zoomScale: 90 }];
+    
+    // Tambahkan ke Workbook sebagai Tab Baru
+    const sheetName = createSafeSheetName(seksi, usedSheetNames);
+    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+  });
+
+  // Unduh File Excel Gabungan
+  XLSX.writeFile(workbook, `LPJ_Keuangan_Gabungan_${tglCetak.replace(/\//g, '-')}.xlsx`);
+}
 
 </script>
 </body>
