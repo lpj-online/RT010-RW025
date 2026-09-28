@@ -783,97 +783,185 @@ function renderTransaksi() {
         tbody.appendChild(tr);
     });
 }
-function createSafeSheetName(name, usedSet) {
-  // Hapus karakter terlarang di Excel
-  let cleanName = String(name || "Sheet")
-    .replace(/[\\/*?:\[\]]/g, "")
-    .trim()
-    .substring(0, 30); // Maksimal 30-31 karakter
+// 1. FUNGSI MEMBERI WARNA, BORDER, DAN STYLE UNTUK 6 KOLOM RT
+function applyExcelStylesRT(worksheet, rows) {
+    const border = {
+        top: { style: "medium", color: { rgb: "000000" } },
+        bottom: { style: "medium", color: { rgb: "000000" } },
+        left: { style: "medium", color: { rgb: "000000" } },
+        right: { style: "medium", color: { rgb: "000000" } }
+    };
 
-  if (!cleanName) cleanName = "Sheet";
+    const thinBorder = {
+        top: { style: "thin", color: { rgb: "000000" } },
+        bottom: { style: "thin", color: { rgb: "000000" } },
+        left: { style: "thin", color: { rgb: "000000" } },
+        right: { style: "thin", color: { rgb: "000000" } }
+    };
 
-  let finalName = cleanName;
-  let counter = 1;
+    const titleStyle = {
+        font: { bold: true, sz: 14, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "13402D" } }, // Hijau Botol Utama
+        alignment: { horizontal: "center", vertical: "center" },
+        border
+    };
 
-  // Cegah nama tab ganda/duplikat
-  while (usedSet.has(finalName)) {
-    finalName = `${cleanName.substring(0, 25)}_${counter}`;
-    counter++;
-  }
+    const headerStyle = {
+        font: { bold: true, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "1F4E3D" } }, // Hijau Botol Header
+        alignment: { horizontal: "center", vertical: "center", wrapText: true },
+        border
+    };
 
-  usedSet.add(finalName);
-  return finalName;
-}
-       
-function exportExcel() {
-    const seksi = currentState.activeSeksi;
-    if (!seksi) return;
+    const bodyStyle = {
+        border: thinBorder,
+        alignment: { vertical: "center", wrapText: true }
+    };
 
-    const dataSeksi = appData[seksi];
-    const transaksiList = dataSeksi.transaksi || [];
+    const footerStyle = {
+        font: { italic: true, color: { rgb: "666666" }, sz: 9 },
+        alignment: { wrapText: true }
+    };
 
-    // Tanggal Cetak (DD/MM/YYYY)
-    const today = new Date();
-    const tglCetak = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
+    const signStyle = {
+        font: { bold: true },
+        alignment: { horizontal: "center", vertical: "center" }
+    };
 
-    // Header Atas & Kolom Utama
-    const excelData = [
-        [`PENGAJUAN PENGGUNAAN DANA - ${seksi.toUpperCase()}`], // Header Utama (Judul Hijau)
-        [], 
-        ["NO", "TANGGAL", "JENIS", "KETERANGAN / RINCIAN", "PEMASUKAN (Rp)", "PENGELUARAN (Rp)"]
+    const range = XLSX.utils.decode_range(worksheet["!ref"]);
+    const lastRowIdx = rows.length - 1;
+    const signStartIdx = lastRowIdx - 5; // Posisi Awal Tanda Tangan
+
+    for (let row = range.s.r; row <= range.e.r; row++) {
+        for (let col = range.s.c; col <= range.e.c; col++) {
+            const address = XLSX.utils.encode_cell({ r: row, c: col });
+            const cell = worksheet[address];
+
+            if (!cell) continue;
+
+            if (row === 0) {
+                cell.s = titleStyle;
+            } else if (row === 2) {
+                cell.s = headerStyle;
+            } else if (row >= 3 && row < signStartIdx) {
+                cell.s = { ...bodyStyle };
+
+                // Format Angka Ribuan untuk Kolom Pemasukan (4) & Pengeluaran (5)
+                if ([4, 5].includes(col)) {
+                    cell.z = "#,##0";
+                    cell.s.alignment = { horizontal: "right", vertical: "center" };
+                }
+
+                // Ratakan Tengah untuk Kolom NO (0), TANGGAL (1), JENIS (2)
+                if ([0, 1, 2].includes(col)) {
+                    cell.s.alignment = { horizontal: "center", vertical: "center" };
+                }
+            } else if (row === lastRowIdx) {
+                cell.s = footerStyle;
+            } else {
+                cell.s = signStyle;
+            }
+        }
+    }
+
+    // Merge Cell yang Disesuaikan dengan 6 Kolom (Indeks 0 s.d 5)
+    worksheet["!merges"] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }, // Merge Judul Utama
+        { s: { r: lastRowIdx, c: 0 }, e: { r: lastRowIdx, c: 5 } }, // Merge Catatan Kaki
+        // Merge Area Tanda Tangan Kiri (Disusun oleh) & Kanan (Mengetahui)
+        { s: { r: signStartIdx, c: 1 }, e: { r: signStartIdx, c: 2 } },
+        { s: { r: signStartIdx + 3, c: 1 }, e: { r: signStartIdx + 3, c: 2 } },
+        { s: { r: signStartIdx, c: 4 }, e: { r: signStartIdx, c: 5 } },
+        { s: { r: signStartIdx + 3, c: 4 }, e: { r: signStartIdx + 3, c: 5 } }
     ];
 
-    // Isi Baris Transaksi
-    transaksiList.forEach((trx, index) => {
-        const rawDate = trx.tanggal ? trx.tanggal.split('T')[0] : '';
-        const parts = rawDate.split('-');
-        const tglClean = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : rawDate;
-        
-        excelData.push([
-            index + 1,
-            tglClean,
-            trx.jenis.toUpperCase(),
-            trx.keterangan,
-            trx.jenis === 'pemasukan' ? trx.nominal : 0,
-            trx.jenis === 'pengeluaran' ? trx.nominal : 0
-        ]);
-    });
-
-    // Baris Tanda Tangan & Footnote Miring Seperti Gambar
-    excelData.push([]);
-    excelData.push([]);
-    excelData.push(["", "Disusun oleh,", "", "", "", "Mengetahui,"]);
-    excelData.push([]);
-    excelData.push([]);
-    excelData.push(["", "( ___________________ )", "", "", "", "( ___________________ )"]);
-    excelData.push([]);
-    excelData.push([`* Berkas gabungan sah digunakan sebagai bukti fisik penggunaan anggaran unit kerja. Dicetak otomatis pada tanggal: ${tglCetak}`]);
-
-    // Format SheetJS
-    const ws = XLSX.utils.aoa_to_sheet(excelData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "LPJ Keuangan");
-
-    // Atur Lebar Kolom
-    ws['!cols'] = [
+    // Lebar Kolom
+    worksheet["!cols"] = [
         { wch: 6 },  // NO
-        { wch: 15 }, // TANGGAL
+        { wch: 14 }, // TANGGAL
         { wch: 15 }, // JENIS
         { wch: 40 }, // KETERANGAN
         { wch: 20 }, // PEMASUKAN
         { wch: 20 }  // PENGELUARAN
     ];
 
-    // Merge Cell untuk Judul Utama (Kolom A-F)
-    ws['!merges'] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }
+    // Auto Filter
+    worksheet["!autofilter"] = {
+        ref: `A3:F${signStartIdx - 1}`
+    };
+}
+
+// 2. FUNGSI UTAMA EXPORT EXCEL PER SEKSI
+function exportExcel() {
+    const seksi = currentState.activeSeksi;
+    if (!seksi) {
+        alert("Silakan pilih seksi terlebih dahulu.");
+        return;
+    }
+
+    const dataSeksi = appData[seksi];
+    const transaksiList = dataSeksi ? (dataSeksi.transaksi || []) : [];
+
+    // Tanggal Cetak (DD/MM/YYYY)
+    const today = new Date();
+    const tglCetak = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
+
+    // Header Laporan
+    const excelData = [
+        [`PENGAJUAN PENGGUNAAN DANA - ${seksi.toUpperCase()}`], // Row 0
+        [], // Row 1
+        ["NO", "TANGGAL", "JENIS", "KETERANGAN / RINCIAN", "PEMASUKAN (Rp)", "PENGELUARAN (Rp)"] // Row 2
     ];
 
-    // Unduh File Excel
+    // Isi Data Transaksi
+    transaksiList.forEach((trx, index) => {
+        const rawDate = trx.tanggal ? trx.tanggal.split('T')[0] : '';
+        const parts = rawDate.split('-');
+        const tglClean = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : rawDate;
+
+        excelData.push([
+            index + 1,
+            tglClean,
+            trx.jenis ? trx.jenis.toUpperCase() : '',
+            trx.keterangan || '',
+            trx.jenis === 'pemasukan' ? trx.nominal : 0,
+            trx.jenis === 'pengeluaran' ? trx.nominal : 0
+        ]);
+    });
+
+    // Baris Tanda Tangan & Footnote
+    excelData.push([]); // Spasi
+    
+    let rowSign1 = new Array(6).fill("");
+    rowSign1[1] = "Disusun oleh,";
+    rowSign1[4] = "Mengetahui,";
+    excelData.push(rowSign1);
+
+    excelData.push(new Array(6).fill("")); // Ruang Tanda Tangan
+    excelData.push(new Array(6).fill(""));
+
+    let rowSign2 = new Array(6).fill("");
+    rowSign2[1] = "( ___________________ )";
+    rowSign2[4] = "( ___________________ )";
+    excelData.push(rowSign2);
+
+    excelData.push([]); // Spasi
+    excelData.push([`* Berkas sah digunakan sebagai bukti fisik penggunaan anggaran. Dicetak otomatis pada tanggal: ${tglCetak}`]);
+
+    // Generate Worksheet & Workbook
+    const ws = XLSX.utils.aoa_to_sheet(excelData);
+    
+    // Panggil Fungsi Style yang Sudah Disesuaikan (Mencegah Error Unduh)
+    applyExcelStylesRT(ws, excelData);
+
+    const wb = XLSX.utils.book_new();
+    const sheetName = seksi.replace(/[\\/*?:\[\]]/g, "").trim().substring(0, 30) || "LPJ";
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+
+    // Proses Unduh
     const fileName = `LPJ_Keuangan_${seksi.replace(/\s+/g, '_')}_${tglCetak.replace(/\//g, '-')}.xlsx`;
     XLSX.writeFile(wb, fileName);
 }
-
 </script>
 </body>
 </html>
