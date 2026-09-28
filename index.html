@@ -783,7 +783,28 @@ function renderTransaksi() {
         tbody.appendChild(tr);
     });
 }
+function createSafeSheetName(name, usedSet) {
+  // Hapus karakter terlarang di Excel
+  let cleanName = String(name || "Sheet")
+    .replace(/[\\/*?:\[\]]/g, "")
+    .trim()
+    .substring(0, 30); // Maksimal 30-31 karakter
 
+  if (!cleanName) cleanName = "Sheet";
+
+  let finalName = cleanName;
+  let counter = 1;
+
+  // Cegah nama tab ganda/duplikat
+  while (usedSet.has(finalName)) {
+    finalName = `${cleanName.substring(0, 25)}_${counter}`;
+    counter++;
+  }
+
+  usedSet.add(finalName);
+  return finalName;
+}
+       
 function exportExcel() {
     const seksi = currentState.activeSeksi;
     if (!seksi) return;
