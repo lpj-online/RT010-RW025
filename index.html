@@ -830,7 +830,9 @@ function applyExcelStylesRT(worksheet, rows) {
 
     const range = XLSX.utils.decode_range(worksheet["!ref"]);
     const lastRowIdx = rows.length - 1;
-    const signStartIdx = lastRowIdx - 5; // Posisi Awal Tanda Tangan
+    
+    // UBAH DARI -5 MENJADI -6 KARENA ADA TAMBAHAN BARIS JABATAN
+    const signStartIdx = lastRowIdx - 6; 
 
     for (let row = range.s.r; row <= range.e.r; row++) {
         for (let col = range.s.c; col <= range.e.c; col++) {
@@ -846,13 +848,11 @@ function applyExcelStylesRT(worksheet, rows) {
             } else if (row >= 3 && row < signStartIdx) {
                 cell.s = { ...bodyStyle };
 
-                // Format Angka Ribuan untuk Kolom Pemasukan (4) & Pengeluaran (5)
                 if ([4, 5].includes(col)) {
                     cell.z = "#,##0";
                     cell.s.alignment = { horizontal: "right", vertical: "center" };
                 }
 
-                // Ratakan Tengah untuk Kolom NO (0), TANGGAL (1), JENIS (2)
                 if ([0, 1, 2].includes(col)) {
                     cell.s.alignment = { horizontal: "center", vertical: "center" };
                 }
@@ -864,15 +864,22 @@ function applyExcelStylesRT(worksheet, rows) {
         }
     }
 
-    // Merge Cell yang Disesuaikan dengan 6 Kolom (Indeks 0 s.d 5)
+    // MERGE CELL UNTUK AREA TANDA TANGAN (SUDAH DISESUAIKAN HASILNYA)
     worksheet["!merges"] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }, // Merge Judul Utama
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }, // Merge Judul
         { s: { r: lastRowIdx, c: 0 }, e: { r: lastRowIdx, c: 5 } }, // Merge Catatan Kaki
-        // Merge Area Tanda Tangan Kiri (Disusun oleh) & Kanan (Mengetahui)
+        
+        // Merge Disusun oleh & Mengetahui
         { s: { r: signStartIdx, c: 1 }, e: { r: signStartIdx, c: 2 } },
-        { s: { r: signStartIdx + 3, c: 1 }, e: { r: signStartIdx + 3, c: 2 } },
         { s: { r: signStartIdx, c: 4 }, e: { r: signStartIdx, c: 5 } },
-        { s: { r: signStartIdx + 3, c: 4 }, e: { r: signStartIdx + 3, c: 5 } }
+
+        // Merge Ketua Panitia & Ketua RT 10/25
+        { s: { r: signStartIdx + 1, c: 1 }, e: { r: signStartIdx + 1, c: 2 } },
+        { s: { r: signStartIdx + 1, c: 4 }, e: { r: signStartIdx + 1, c: 5 } },
+
+        // Merge Garis Nama Terang
+        { s: { r: signStartIdx + 4, c: 1 }, e: { r: signStartIdx + 4, c: 2 } },
+        { s: { r: signStartIdx + 4, c: 4 }, e: { r: signStartIdx + 4, c: 5 } }
     ];
 
     // Lebar Kolom
@@ -885,12 +892,10 @@ function applyExcelStylesRT(worksheet, rows) {
         { wch: 20 }  // PENGELUARAN
     ];
 
-    // Auto Filter
     worksheet["!autofilter"] = {
         ref: `A3:F${signStartIdx - 1}`
     };
 }
-
 // 2. FUNGSI UTAMA EXPORT EXCEL PER SEKSI
 function exportExcel() {
     const seksi = currentState.activeSeksi;
@@ -933,21 +938,29 @@ function exportExcel() {
     excelData.push([]); // Spasi
     
     let rowSign1 = new Array(6).fill("");
+    let rowSign1 = new Array(6).fill("");
     rowSign1[1] = "Disusun oleh,";
     rowSign1[4] = "Mengetahui,";
     excelData.push(rowSign1);
 
-    excelData.push(new Array(6).fill("")); // Ruang Tanda Tangan
+    // Baris 2: Sub-Jabatan / Detail Peran (Ketua Panitia & Ketua RT 10/25)
+    let rowSignSub = new Array(6).fill("");
+    rowSignSub[1] = "Ketua Panitia";
+    rowSignSub[4] = "Ketua RT 10/25";
+    excelData.push(rowSignSub);
+
+    // Baris 3 & 4: Ruang Kosong Tanda Tangan Fisik / Stempel
+    excelData.push(new Array(6).fill(""));
     excelData.push(new Array(6).fill(""));
 
+    // Baris 5: Garis Nama Terang
     let rowSign2 = new Array(6).fill("");
     rowSign2[1] = "( ___________________ )";
     rowSign2[4] = "( ___________________ )";
     excelData.push(rowSign2);
 
-    excelData.push([]); // Spasi
+    excelData.push([]); // Spasi kosong
     excelData.push([`* Berkas sah digunakan sebagai bukti fisik penggunaan anggaran. Dicetak otomatis pada tanggal: ${tglCetak}`]);
-
     // Generate Worksheet & Workbook
     const ws = XLSX.utils.aoa_to_sheet(excelData);
     
