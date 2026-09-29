@@ -933,22 +933,30 @@ function exportExcel() {
     // Baris Tanda Tangan & Footnote
     excelData.push([]); // Spasi
     
-    let rowSign1 = new Array(6).fill("");
-    rowSign1[1] = "Disusun oleh,";
-    rowSign1[4] = "Mengetahui,";
-    excelData.push(rowSign1);
+    // Baris 1: Disusun oleh & Mengetahui
+    let rowSignHeader = new Array(6).fill("");
+    rowSignHeader[1] = "Disusun oleh,";
+    rowSignHeader[4] = "Mengetahui,";
+    excelData.push(rowSignHeader);
 
-    excelData.push(new Array(6).fill("")); // Ruang Tanda Tangan
+    // Baris 2: Sub-Jabatan (Ketua Panitia & Ketua RT 10/25)
+    let rowSignSub = new Array(6).fill("");
+    rowSignSub[1] = "Ketua Panitia";
+    rowSignSub[4] = "Ketua RT 10/25";
+    excelData.push(rowSignSub);
+
+    // Baris 3 & 4: Ruang Kosong Tanda Tangan Fisik
+    excelData.push(new Array(6).fill(""));
     excelData.push(new Array(6).fill(""));
 
-    let rowSign2 = new Array(6).fill("");
-    rowSign2[1] = "( ___________________ )";
-    rowSign2[4] = "( ___________________ )";
-    excelData.push(rowSign2);
+    // Baris 5: Garis Nama Terang
+    let rowSignFooter = new Array(6).fill("");
+    rowSignFooter[1] = "( ___________________ )";
+    rowSignFooter[4] = "( ___________________ )";
+    excelData.push(rowSignFooter);
 
-    excelData.push([]); // Spasi
+    excelData.push([]); // Spasi kosong
     excelData.push([`* Berkas sah digunakan sebagai bukti fisik penggunaan anggaran. Dicetak otomatis pada tanggal: ${tglCetak}`]);
-
     // Generate Worksheet & Workbook
     const ws = XLSX.utils.aoa_to_sheet(excelData);
     
