@@ -379,7 +379,20 @@
             })
             .catch(err => console.error("Gagal mengambil data dari Google Sheets:", err));
     });
+function populateSeksiDropdown() {
+        // Sesuaikan 'selectSeksi' dengan ID elemen <select> pada HTML form kamu
+        const selectElem = document.getElementById("selectSeksi"); 
+        if (!selectElem) return;
 
+        selectElem.innerHTML = ""; // Bersihkan opsi lama
+
+        DAFTAR_SEKSI.forEach(seksi => {
+            const option = document.createElement("option");
+            option.value = seksi;
+            option.textContent = seksi;
+            selectElem.appendChild(option);
+        });
+    }
     function changeSeksi(seksiName) {
         if (!seksiName) return;
         currentState.activeSeksi = seksiName;
