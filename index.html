@@ -909,24 +909,26 @@ function applyExcelStylesRT(worksheet, rows) {
 }
 // 2. FUNGSI UTAMA EXPORT EXCEL PER SEKSI
 function exportExcel() {
-    const seksi = currentState.activeSeksi;
+    const seksi = (typeof currentState !== 'undefined' && currentState.activeSeksi) 
+                  ? currentState.activeSeksi 
+                  : null;
+
     if (!seksi) {
-        alert("Silakan pilih seksi terlebih dahulu.");
+        alert("Silakan pilih seksi/menu terlebih dahulu.");
         return;
     }
 
     const dataSeksi = appData[seksi];
     const transaksiList = dataSeksi ? (dataSeksi.transaksi || []) : [];
 
-    // Tanggal Cetak (DD/MM/YYYY)
     const today = new Date();
     const tglCetak = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
 
-    // Header Laporan
+    // Header Laporan (7 Kolom: A sampai G)
     const excelData = [
         [`PENGAJUAN PENGGUNAAN DANA - ${seksi.toUpperCase()}`], // Row 0
         [], // Row 1
-        ["NO", "TANGGAL", "JENIS", "KETERANGAN / RINCIAN", "PEMASUKAN (Rp)", "PENGELUARAN (Rp)"] // Row 2
+        ["NO", "TANGGAL", "JENIS", "KETERANGAN / RINCIAN", "PEMASUKAN (Rp)", "PENGELUARAN (Rp)", ""] // Row 2 (Kolom G digabung untuk ruang)
     ];
 
     // Isi Data Transaksi
@@ -941,48 +943,52 @@ function exportExcel() {
             trx.jenis ? trx.jenis.toUpperCase() : '',
             trx.keterangan || '',
             trx.jenis === 'pemasukan' ? trx.nominal : 0,
-            trx.jenis === 'pengeluaran' ? trx.nominal : 0
+            trx.jenis === 'pengeluaran' ? trx.nominal : 0,
+            "" // Kolom tambahan untuk ruang tanda tangan 3 posisi
         ]);
     });
-
     // Baris Tanda Tangan & Footnote
-    excelData.push([]); // Spasi
-    
-   let rowSign1 = new Array(6).fill("");
-    rowSign1[1] = "Disusun oleh,";
-    rowSign1[4] = "Mengetahui,";
+   excelData.push([]); // Spasi kosong
+
+    // Baris 1: Disusun oleh & Mengetahui
+    let rowSign1 = new Array(7).fill("");
+    rowSign1[0] = "Disusun oleh,";   // Kolom A-B
+    rowSign1[3] = "Mengetahui,";     // Kolom D-E
+    rowSign1[5] = "Mengetahui,";     // Kolom F-G
     excelData.push(rowSign1);
 
-    // Baris 2: Jabatan
-    let rowSignSub = new Array(6).fill("");
-    rowSignSub[1] = "Ketua Panitia";
-    rowSignSub[4] = "Ketua RT 10/25";
+    // Baris 2: Sub-Jabatan / Peran
+    let rowSignSub = new Array(7).fill("");
+    rowSignSub[0] = "Ketua Panitia";
+    rowSignSub[3] = "Bendahara RT";
+    rowSignSub[5] = "Ketua RT 10/25";
     excelData.push(rowSignSub);
 
     // Baris 3 & 4: Ruang Kosong Tanda Tangan
-    excelData.push(new Array(6).fill(""));
-    excelData.push(new Array(6).fill(""));
+    excelData.push(new Array(7).fill(""));
+    excelData.push(new Array(7).fill(""));
 
-    // Baris 5: Nama Terang
-    let rowSign2 = new Array(6).fill("");
-    rowSign2[1] = "( ___________________ )";
-    rowSign2[4] = "( ___________________ )";
+    // Baris 5: Garis Nama Terang
+    let rowSign2 = new Array(7).fill("");
+    rowSign2[0] = "( ___________________ )";
+    rowSign2[3] = "( ___________________ )";
+    rowSign2[5] = "( ___________________ )";
     excelData.push(rowSign2);
 
     excelData.push([]); // Spasi
     excelData.push([`* Berkas sah digunakan sebagai bukti fisik penggunaan anggaran. Dicetak otomatis pada tanggal: ${tglCetak}`]);
-    
-    // Generate Worksheet & Workbook
+
+    // Generate Worksheet
     const ws = XLSX.utils.aoa_to_sheet(excelData);
     
-    // Panggil Fungsi Style yang Sudah Disesuaikan (Mencegah Error Unduh)
+    // Panggil Styling 3 Pihak
     applyExcelStylesRT(ws, excelData);
 
     const wb = XLSX.utils.book_new();
     const sheetName = seksi.replace(/[\\/*?:\[\]]/g, "").trim().substring(0, 30) || "LPJ";
     XLSX.utils.book_append_sheet(wb, ws, sheetName);
 
-    // Proses Unduh
+    // Unduh File Excel
     const fileName = `LPJ_Keuangan_${seksi.replace(/\s+/g, '_')}_${tglCetak.replace(/\//g, '-')}.xlsx`;
     XLSX.writeFile(wb, fileName);
 }
