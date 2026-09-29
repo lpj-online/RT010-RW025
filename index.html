@@ -303,12 +303,11 @@
     "Seksi Dana Usaha (Danus)", 
     ];
     
-    let appData = JSON.parse(localStorage.getItem('appData_LPJ')) || {};
-
-let currentState = {
-    activeSeksi: DAFTAR_SEKSI[0], // Set default ke seksi pertama agar tidak null
-    activeTab: 'anggaran'
-};
+    let appData = {};
+    let currentState = {
+        activeSeksi: null,
+        activeTab: 'anggaran'
+    };
 
 // 2. Sinkronkan DAFTAR_SEKSI dengan appData secara instan
 DAFTAR_SEKSI.forEach(seksi => {
