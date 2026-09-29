@@ -295,8 +295,8 @@
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyoZ31Fz1E2n3m9WuAaRve1QkAiiSEIo5LZIyboK6ln77uOw7rSIeRTLhiEPekR5_1c/exec";
 
     const DAFTAR_SEKSI = [
-        "Bendahara RT",
-       "Panitia Pembangunan Lingkungan", 
+    "Bendahara RT",
+    "Panitia Pembangunan Lingkungan", 
     "Seksi Perencanaan & Logistik (Material)", 
     "Seksi Pembangunan / Teknis Lapangan", 
     "Seksi Konsumsi", 
@@ -825,21 +825,15 @@ function applyExcelStylesRT(worksheet, rows) {
         alignment: { vertical: "center" }
     };
 
-    const signStyle = {
-        font: { bold: true },
-        alignment: { horizontal: "center", vertical: "center" }
-    };
-
     const range = XLSX.utils.decode_range(worksheet["!ref"]);
     const lastRowIdx = rows.length - 1;
-    const signStartIdx = lastRowIdx - 6; // Indeks awal tanda tangan
+    const signStartIdx = lastRowIdx - 6;
 
     for (let row = range.s.r; row <= range.e.r; row++) {
         for (let col = range.s.c; col <= range.e.c; col++) {
             const address = XLSX.utils.encode_cell({ r: row, c: col });
             let cell = worksheet[address];
 
-            // Jika sel kosong di area merge, buatkan sel dummy agar style/alignment center tetap berlaku
             if (!cell) {
                 cell = { t: 's', v: '' };
                 worksheet[address] = cell;
@@ -849,84 +843,88 @@ function applyExcelStylesRT(worksheet, rows) {
                 cell.s = titleStyle;
             } else if (row === 2) {
                 cell.s = headerStyle;
-            } else if (row >= 3 && row < signStartIdx - 1) { // Hanya baris data transaksi
+            } else if (row >= 3 && row < signStartIdx - 1) {
                 cell.s = { ...bodyStyle };
 
-                // Format Angka Ribuan (Pemasukan & Pengeluaran)
                 if ([4, 5].includes(col)) {
                     cell.z = "#,##0";
                     cell.s.alignment = { horizontal: "right", vertical: "center" };
                 }
 
-                // Ratakan Tengah (NO, TANGGAL, JENIS)
                 if ([0, 1, 2].includes(col)) {
                     cell.s.alignment = { horizontal: "center", vertical: "center" };
                 }
             } else if (row === lastRowIdx) {
                 cell.s = footerStyle;
             } else if (row >= signStartIdx) {
-                // Semua baris di area tanda tangan dibuat Rata Tengah (Center)
                 cell.s = {
-                    font: { bold: row === signStartIdx + 1 }, // Cetak tebal untuk Ketua Panitia & Ketua RT
+                    font: { bold: row === signStartIdx + 1 },
                     alignment: { horizontal: "center", vertical: "center" }
                 };
             }
         }
     }
 
-    // Merge Cell yang Presisi
+    // Merge Cell untuk 3 Tanda Tangan Simetris
     worksheet["!merges"] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }, // Judul Utama
-        { s: { r: lastRowIdx, c: 0 }, e: { r: lastRowIdx, c: 5 } }, // Footnote
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }, // Judul Utama (A-G)
+        { s: { r: 2, c: 5 }, e: { r: 2, c: 6 } }, // Header Pengeluaran gabung ke F-G
+        { s: { r: lastRowIdx, c: 0 }, e: { r: lastRowIdx, c: 6 } }, // Footnote
 
-        // Merge "Disusun oleh," (Kolom B-C) & "Mengetahui," (Kolom E-F)
-        { s: { r: signStartIdx, c: 1 }, e: { r: signStartIdx, c: 2 } },
-        { s: { r: signStartIdx, c: 4 }, e: { r: signStartIdx, c: 5 } },
+        // Merge Tanda Tangan 1: Kiri (Ketua Panitia - Kolom A-B)
+        { s: { r: signStartIdx, c: 0 }, e: { r: signStartIdx, c: 1 } },
+        { s: { r: signStartIdx + 1, c: 0 }, e: { r: signStartIdx + 1, c: 1 } },
+        { s: { r: signStartIdx + 4, c: 0 }, e: { r: signStartIdx + 4, c: 1 } },
 
-        // Merge "Ketua Panitia" & "Ketua RT 10/25"
-        { s: { r: signStartIdx + 1, c: 1 }, e: { r: signStartIdx + 1, c: 2 } },
-        { s: { r: signStartIdx + 1, c: 4 }, e: { r: signStartIdx + 1, c: 5 } },
+        // Merge Tanda Tangan 2: Tengah (Bendahara RT - Kolom C-D)
+        { s: { r: signStartIdx, c: 2 }, e: { r: signStartIdx, c: 3 } },
+        { s: { r: signStartIdx + 1, c: 2 }, e: { r: signStartIdx + 1, c: 3 } },
+        { s: { r: signStartIdx + 4, c: 2 }, e: { r: signStartIdx + 4, c: 3 } },
 
-        // Merge Garis Nama Terang
-        { s: { r: signStartIdx + 4, c: 1 }, e: { r: signStartIdx + 4, c: 2 } },
-        { s: { r: signStartIdx + 4, c: 4 }, e: { r: signStartIdx + 4, c: 5 } }
+        // Merge Tanda Tangan 3: Kanan (Ketua RT 10/25 - Kolom E-G)
+        { s: { r: signStartIdx, c: 4 }, e: { r: signStartIdx, c: 6 } },
+        { s: { r: signStartIdx + 1, c: 4 }, e: { r: signStartIdx + 1, c: 6 } },
+        { s: { r: signStartIdx + 4, c: 4 }, e: { r: signStartIdx + 4, c: 6 } }
     ];
 
     // Lebar Kolom
     worksheet["!cols"] = [
-        { wch: 6 },  // NO
-        { wch: 14 }, // TANGGAL
-        { wch: 15 }, // JENIS
-        { wch: 40 }, // KETERANGAN
-        { wch: 20 }, // PEMASUKAN
-        { wch: 20 }  // PENGELUARAN
+        { wch: 6 },  // A: NO
+        { wch: 14 }, // B: TANGGAL
+        { wch: 15 }, // C: JENIS
+        { wch: 35 }, // D: KETERANGAN
+        { wch: 18 }, // E: PEMASUKAN
+        { wch: 18 }, // F: PENGELUARAN
+        { wch: 5 }   // G: EXTRA RUANG
     ];
 
-    // Filter Hanya untuk Tabel Data (A3 sampai F baris data terakhir)
     worksheet["!autofilter"] = {
         ref: `A3:F${signStartIdx - 2}`
     };
 }
+
 // 2. FUNGSI UTAMA EXPORT EXCEL PER SEKSI
 function exportExcel() {
-    const seksi = currentState.activeSeksi;
+    const seksi = (typeof currentState !== 'undefined' && currentState.activeSeksi) 
+                  ? currentState.activeSeksi 
+                  : null;
+
     if (!seksi) {
-        alert("Silakan pilih seksi terlebih dahulu.");
+        alert("Silakan pilih seksi/menu terlebih dahulu.");
         return;
     }
 
     const dataSeksi = appData[seksi];
     const transaksiList = dataSeksi ? (dataSeksi.transaksi || []) : [];
 
-    // Tanggal Cetak (DD/MM/YYYY)
     const today = new Date();
     const tglCetak = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
 
-    // Header Laporan
+    // Header Laporan (7 Kolom: A sampai G)
     const excelData = [
         [`PENGAJUAN PENGGUNAAN DANA - ${seksi.toUpperCase()}`], // Row 0
         [], // Row 1
-        ["NO", "TANGGAL", "JENIS", "KETERANGAN / RINCIAN", "PEMASUKAN (Rp)", "PENGELUARAN (Rp)"] // Row 2
+        ["NO", "TANGGAL", "JENIS", "KETERANGAN / RINCIAN", "PEMASUKAN (Rp)", "PENGELUARAN (Rp)", ""] // Row 2 (Kolom G digabung untuk ruang)
     ];
 
     // Isi Data Transaksi
@@ -941,48 +939,55 @@ function exportExcel() {
             trx.jenis ? trx.jenis.toUpperCase() : '',
             trx.keterangan || '',
             trx.jenis === 'pemasukan' ? trx.nominal : 0,
-            trx.jenis === 'pengeluaran' ? trx.nominal : 0
+            trx.jenis === 'pengeluaran' ? trx.nominal : 0,
+            "" // Kolom tambahan untuk ruang tanda tangan 3 posisi
         ]);
     });
 
-    // Baris Tanda Tangan & Footnote
-    excelData.push([]); // Spasi
-    
-   let rowSign1 = new Array(6).fill("");
-    rowSign1[1] = "Disusun oleh,";
-    rowSign1[4] = "Mengetahui,";
+    // -------------------------------------------------------------
+    // BARIS TANDA TANGAN 3 PIHAK (Panitia, Bendahara, Ketua RT)
+    // -------------------------------------------------------------
+    excelData.push([]); // Spasi kosong
+
+    // Baris 1: Disusun oleh & Mengetahui
+    let rowSign1 = new Array(7).fill("");
+    rowSign1[0] = "Disusun oleh,";   // Kolom A-B
+    rowSign1[3] = "Mengetahui,";     // Kolom D-E
+    rowSign1[5] = "Mengetahui,";     // Kolom F-G
     excelData.push(rowSign1);
 
-    // Baris 2: Jabatan
-    let rowSignSub = new Array(6).fill("");
-    rowSignSub[1] = "Ketua Panitia";
-    rowSignSub[4] = "Ketua RT 10/25";
+    // Baris 2: Sub-Jabatan / Peran
+    let rowSignSub = new Array(7).fill("");
+    rowSignSub[0] = "Ketua Panitia";
+    rowSignSub[3] = "Bendahara RT";
+    rowSignSub[5] = "Ketua RT 10/25";
     excelData.push(rowSignSub);
 
     // Baris 3 & 4: Ruang Kosong Tanda Tangan
-    excelData.push(new Array(6).fill(""));
-    excelData.push(new Array(6).fill(""));
+    excelData.push(new Array(7).fill(""));
+    excelData.push(new Array(7).fill(""));
 
-    // Baris 5: Nama Terang
-    let rowSign2 = new Array(6).fill("");
-    rowSign2[1] = "( ___________________ )";
-    rowSign2[4] = "( ___________________ )";
+    // Baris 5: Garis Nama Terang
+    let rowSign2 = new Array(7).fill("");
+    rowSign2[0] = "( ___________________ )";
+    rowSign2[3] = "( ___________________ )";
+    rowSign2[5] = "( ___________________ )";
     excelData.push(rowSign2);
 
     excelData.push([]); // Spasi
     excelData.push([`* Berkas sah digunakan sebagai bukti fisik penggunaan anggaran. Dicetak otomatis pada tanggal: ${tglCetak}`]);
-    
-    // Generate Worksheet & Workbook
+
+    // Generate Worksheet
     const ws = XLSX.utils.aoa_to_sheet(excelData);
     
-    // Panggil Fungsi Style yang Sudah Disesuaikan (Mencegah Error Unduh)
+    // Panggil Styling 3 Pihak
     applyExcelStylesRT(ws, excelData);
 
     const wb = XLSX.utils.book_new();
     const sheetName = seksi.replace(/[\\/*?:\[\]]/g, "").trim().substring(0, 30) || "LPJ";
     XLSX.utils.book_append_sheet(wb, ws, sheetName);
 
-    // Proses Unduh
+    // Unduh File Excel
     const fileName = `LPJ_Keuangan_${seksi.replace(/\s+/g, '_')}_${tglCetak.replace(/\//g, '-')}.xlsx`;
     XLSX.writeFile(wb, fileName);
 }
