@@ -285,7 +285,7 @@
         <!-- Footer -->
         <footer class="bg-white border-t border-gray-200 mt-auto">
             <div class="max-w-7xl mx-auto px-4 py-4 text-center text-sm text-gray-500">
-                &copy; <span id="current-year"></span> Sistem Aplikasi LPJ. Data disimpan di Googl Drive dengan aman.
+                &copy; <span id="current-year"></span> Sistem Aplikasi LPJ. Data disimpan di Google Drive dengan aman.
             </div>
         </footer>
     </div>
@@ -316,7 +316,22 @@
         };
     }
 });
+localStorage.setItem('appData_LPJ', JSON.stringify(appData));
 
+// 4. Fungsi mengisi Dropdown (Langsung dipanggil)
+function populateSeksiDropdown() {
+    const selectElem = document.getElementById("selectSeksi"); 
+    if (!selectElem) return;
+
+    selectElem.innerHTML = ""; // Bersihkan opsi lama
+
+    DAFTAR_SEKSI.forEach(seksi => {
+        const option = document.createElement("option");
+        option.value = seksi;
+        option.textContent = seksi;
+        selectElem.appendChild(option);
+    });
+}
     function formatRupiah(number) {
         if (number === 0) return 'Rp 0';
         if (!number) return '';
