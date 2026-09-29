@@ -302,20 +302,25 @@
     "Bendahara RT",
     "Seksi Dana Usaha (Danus)", 
     ];
-    let appData = {};
-    let currentState = {
-        activeSeksi: null,
-        activeTab: 'anggaran'
-    };
+    
+    let appData = JSON.parse(localStorage.getItem('appData_LPJ')) || {};
 
-  DAFTAR_SEKSI.forEach(seksi => {
+let currentState = {
+    activeSeksi: DAFTAR_SEKSI[0], // Set default ke seksi pertama agar tidak null
+    activeTab: 'anggaran'
+};
+
+// 2. Sinkronkan DAFTAR_SEKSI dengan appData secara instan
+DAFTAR_SEKSI.forEach(seksi => {
     if (!appData[seksi]) {
         appData[seksi] = {
-            anggaran: 0, // Tempat menyimpan Alokasi Anggaran
+            anggaran: 0,
             transaksi: []
         };
     }
 });
+
+// 3. Simpan kembali hasil sinkronisasi ke LocalStorage
 localStorage.setItem('appData_LPJ', JSON.stringify(appData));
 
 // 4. Fungsi mengisi Dropdown (Langsung dipanggil)
