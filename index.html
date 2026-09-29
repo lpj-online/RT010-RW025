@@ -311,12 +311,12 @@
     };
 
     DAFTAR_SEKSI.forEach(seksi => {
+    if (!appData[seksi]) {
         appData[seksi] = {
-            anggaran: 0,
             transaksi: []
         };
-    });
-
+    }
+});
     function formatRupiah(number) {
         if (number === 0) return 'Rp 0';
         if (!number) return '';
