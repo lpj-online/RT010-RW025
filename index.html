@@ -309,12 +309,14 @@
         activeTab: 'anggaran'
     };
 
-    DAFTAR_SEKSI.forEach(seksi => {
+   // Pastikan setiap seksi/panpel memiliki struktur penampung transaksi
+DAFTAR_SEKSI.forEach(seksi => {
+    if (!appData[seksi]) {
         appData[seksi] = {
-            anggaran: 0,
             transaksi: []
         };
-    });
+    }
+});
 
     function formatRupiah(number) {
         if (number === 0) return 'Rp 0';
