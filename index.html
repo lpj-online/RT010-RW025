@@ -295,13 +295,12 @@
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyoZ31Fz1E2n3m9WuAaRve1QkAiiSEIo5LZIyboK6ln77uOw7rSIeRTLhiEPekR5_1c/exec";
 
     const DAFTAR_SEKSI = [
+    "Bendahara RT",
     "Panitia Pembangunan Lingkungan", 
     "Seksi Perencanaan & Logistik (Material)", 
     "Seksi Pembangunan / Teknis Lapangan", 
     "Seksi Konsumsi", 
-    "Bendahara RT", 
-    "Seksi Humas & Dokumentasi",
-    "Seksi Dana Usaha (Danus)"
+    "Seksi Dana Usaha (Danus)", 
     ];
 
     let appData = {};
@@ -311,12 +310,12 @@
     };
 
     DAFTAR_SEKSI.forEach(seksi => {
-    if (!appData[seksi]) {
         appData[seksi] = {
+            anggaran: 0,
             transaksi: []
         };
-    }
-});
+    });
+
     function formatRupiah(number) {
         if (number === 0) return 'Rp 0';
         if (!number) return '';
