@@ -302,7 +302,19 @@
     "Bendahara RT",
     "Seksi Dana Usaha (Danus)", 
     ];
-    
+    function populateSeksiDropdown() {
+    const selectElem = document.getElementById("selectSeksi"); 
+    if (!selectElem) return;
+
+    selectElem.innerHTML = ""; // Bersihkan opsi lama
+
+    DAFTAR_SEKSI.forEach(seksi => {
+        const option = document.createElement("option");
+        option.value = seksi;
+        option.textContent = seksi;
+        selectElem.appendChild(option);
+    });
+}
         let appData = {};
     let currentState = {
         activeSeksi: null,
