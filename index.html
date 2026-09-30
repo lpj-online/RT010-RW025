@@ -302,7 +302,27 @@
     "Bendahara RT",
     "Seksi Dana Usaha (Danus)" 
     ];
-    function populateSeksiDropdown() {
+    
+    let appData = JSON.parse(localStorage.getItem('appData_LPJ')) || {};
+    let currentState = {
+    activeSeksi: DAFTAR_SEKSI[0], // Set default ke seksi pertama agar tidak null
+    activeTab: 'anggaran'
+    };
+    
+    DAFTAR_SEKSI.forEach(seksi => {
+    if (!appData[seksi]) {
+        appData[seksi] = {
+            anggaran: 0,
+            transaksi: []
+        };
+    }
+});
+       
+// 3. Simpan kembali hasil sinkronisasi ke LocalStorage
+localStorage.setItem('appData_LPJ', JSON.stringify(appData));
+
+// 4. Fungsi mengisi Dropdown (Langsung dipanggil)
+function populateSeksiDropdown() {
     const selectElem = document.getElementById("selectSeksi"); 
     if (!selectElem) return;
 
@@ -315,24 +335,8 @@
         selectElem.appendChild(option);
     });
 }
-        let appData = {};
-    let currentState = {
-        activeSeksi: null,
-        activeTab: 'anggaran'
-    };
 
-    DAFTAR_SEKSI.forEach(seksi => {
-        appData[seksi] = {
-            anggaran: 0,
-            transaksi: []
-        };
-    });
-
-
-// 3. Simpan kembali hasil sinkronisasi ke LocalStorage
-localStorage.setItem('appData_LPJ', JSON.stringify(appData));
-
-// 4. Fungsi mengisi Dropdown (Langsung dipanggil)
+// 5. Fungsi mengisi Dropdown (Langsung dipanggil)
 function populateSeksiDropdown() {
     const selectElem = document.getElementById("selectSeksi"); 
     if (!selectElem) return;
