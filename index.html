@@ -402,16 +402,37 @@ function populateSeksiDropdown() {
             .catch(err => console.error("Gagal mengambil data dari Google Sheets:", err));
     });
 
-    function changeSeksi(seksiName) {
-        if (!seksiName) return;
-        currentState.activeSeksi = seksiName;
-        
-        document.getElementById('empty-state').classList.add('hidden');
-        document.getElementById('dashboard-content').classList.remove('hidden');
-        document.getElementById('dashboard-content').classList.add('flex');
-        document.getElementById('active-seksi-title').textContent = seksiName;
-        switchTab('anggaran');
+   function changeSeksi(seksiName) {
+    if (!seksiName) return;
+    
+    // 1. Set seksi aktif
+    currentState.activeSeksi = seksiName;
+    
+    // 2. PASTI-KAN appData untuk seksi ini sudah ada (mencegah Uncaught TypeError)
+    if (!appData[seksiName]) {
+        appData[seksiName] = {
+            anggaran: 0,
+            transaksi: []
+        };
+        // Simpan ke localStorage agar konsisten
+        localStorage.setItem('appData_LPJ', JSON.stringify(appData));
     }
+    
+    // 3. Tampilkan elemen UI
+    const emptyState = document.getElementById('empty-state');
+    const dashboardContent = document.getElementById('dashboard-content');
+    const activeSeksiTitle = document.getElementById('active-seksi-title');
+
+    if (emptyState) emptyState.classList.add('hidden');
+    if (dashboardContent) {
+        dashboardContent.classList.remove('hidden');
+        dashboardContent.classList.add('flex');
+    }
+    if (activeSeksiTitle) activeSeksiTitle.textContent = seksiName;
+    
+    // 4. Pindah ke tab anggaran (sekarang aman karena appData[seksiName] sudah pasti ada)
+    switchTab('anggaran');
+}
 
     function switchTab(tabName) {
         currentState.activeTab = tabName;
