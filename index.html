@@ -303,18 +303,15 @@
     "Seksi Dana Usaha (Danus)", 
     ];
 
-    let appData = {};
-    let currentState = {
-        activeSeksi: null,
-        activeTab: 'anggaran'
-    };
+ let appData = JSON.parse(localStorage.getItem('appData_LPJ')) || {};
+        let currentState = { activeSeksi: DAFTAR_SEKSI[0] };
 
-    DAFTAR_SEKSI.forEach(seksi => {
-        appData[seksi] = {
-            anggaran: 0,
-            transaksi: []
-        };
-    });
+        // Inisialisasi struktur data
+        DAFTAR_SEKSI.forEach(seksi => {
+            if (!appData[seksi]) {
+                appData[seksi] = { transaksi: [] };
+            }
+        });
   
     function formatRupiah(number) {
         if (number === 0) return 'Rp 0';
