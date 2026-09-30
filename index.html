@@ -315,7 +315,11 @@
             transaksi: []
         };
     });
-
+    function switchSeksi(seksi) {
+            currentState.activeSeksi = seksi;
+            renderTransaksi();
+        }
+    
     function formatRupiah(number) {
         if (number === 0) return 'Rp 0';
         if (!number) return '';
