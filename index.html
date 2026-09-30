@@ -12,11 +12,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<!-- Pustaka untuk Ekspor Excel dengan Format Kustom -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
     <!-- Gunakan CDN xlsx-js-style agar properti cell.s (warna/style) bisa berfungsi -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
-
     <script>
         tailwind.config = {
             theme: {
@@ -294,30 +292,53 @@
 
    <script>
  
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxsgYOp3bWhH726Z_kMt0qC_WJ5NBUxy_owP3Pl21XOTcafDDA9E6E-qz7J8d58Bpr6/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyoZ31Fz1E2n3m9WuAaRve1QkAiiSEIo5LZIyboK6ln77uOw7rSIeRTLhiEPekR5_1c/exec";
 
-    const DAFTAR_SEKSI = [
-    "Bendahara RT",  
+   const DAFTAR_SEKSI = [
     "Panitia Pembangunan Lingkungan", 
     "Seksi Perencanaan & Logistik (Material)", 
     "Seksi Pembangunan / Teknis Lapangan", 
-    "Seksi Konsumsi", 
-    "Seksi Dana Usaha (Danus)",
-    
-    ];
+    "Seksi Konsumsi",
+    "Bendahara RT",
+    "Seksi Dana Usaha (Danus)"
+];
 
-    let appData = {};
-    let currentState = {
-        activeSeksi: null,
-        activeTab: 'anggaran'
-    };
+// 1. Ambil data dari LocalStorage jika ada, jika tidak ada baru gunakan {}
+let appData = JSON.parse(localStorage.getItem('appData_LPJ')) || {};
 
-    DAFTAR_SEKSI.forEach(seksi => {
+let currentState = {
+    activeSeksi: DAFTAR_SEKSI[0], // Set default ke seksi pertama agar tidak null
+    activeTab: 'anggaran'
+};
+
+// 2. Sinkronkan DAFTAR_SEKSI dengan appData secara instan
+DAFTAR_SEKSI.forEach(seksi => {
+    if (!appData[seksi]) {
         appData[seksi] = {
             anggaran: 0,
             transaksi: []
         };
+    }
+});
+
+// 3. Simpan kembali hasil sinkronisasi ke LocalStorage
+localStorage.setItem('appData_LPJ', JSON.stringify(appData));
+
+// 4. Fungsi mengisi Dropdown (Langsung dipanggil)
+function populateSeksiDropdown() {
+    const selectElem = document.getElementById("selectSeksi"); 
+    if (!selectElem) return;
+
+    selectElem.innerHTML = ""; // Bersihkan opsi lama
+
+    DAFTAR_SEKSI.forEach(seksi => {
+        const option = document.createElement("option");
+        option.value = seksi;
+        option.textContent = seksi;
+        selectElem.appendChild(option);
     });
+}
+   
 
     function formatRupiah(number) {
         if (number === 0) return 'Rp 0';
