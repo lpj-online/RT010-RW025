@@ -285,7 +285,7 @@
         <!-- Footer -->
         <footer class="bg-white border-t border-gray-200 mt-auto">
             <div class="max-w-7xl mx-auto px-4 py-4 text-center text-sm text-gray-500">
-                &copy; <span id="current-year"></span> Sistem Aplikasi LPJ. Data disimpan di Google Drive dengan aman.
+                &copy; <span id="current-year"></span> Sistem Aplikasi LPJ. Data disimpan di Googl Drive dengan aman.
             </div>
         </footer>
     </div>
@@ -295,61 +295,27 @@
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyoZ31Fz1E2n3m9WuAaRve1QkAiiSEIo5LZIyboK6ln77uOw7rSIeRTLhiEPekR5_1c/exec";
 
     const DAFTAR_SEKSI = [
+    "Bendahara RT",
     "Panitia Pembangunan Lingkungan", 
     "Seksi Perencanaan & Logistik (Material)", 
     "Seksi Pembangunan / Teknis Lapangan", 
-    "Seksi Konsumsi",
-    "Bendahara RT",
-    "Seksi Dana Usaha (Danus)" 
+    "Seksi Konsumsi", 
+    "Seksi Dana Usaha (Danus)", 
     ];
-    
-    let appData = JSON.parse(localStorage.getItem('appData_LPJ')) || {};
+
+    let appData = {};
     let currentState = {
-    activeSeksi: DAFTAR_SEKSI[0], // Set default ke seksi pertama agar tidak null
-    activeTab: 'anggaran'
+        activeSeksi: null,
+        activeTab: 'anggaran'
     };
-    
+
     DAFTAR_SEKSI.forEach(seksi => {
-    if (!appData[seksi]) {
         appData[seksi] = {
             anggaran: 0,
             transaksi: []
         };
-    }
-});
-       
-// 3. Simpan kembali hasil sinkronisasi ke LocalStorage
-localStorage.setItem('appData_LPJ', JSON.stringify(appData));
-
-// 4. Fungsi mengisi Dropdown (Langsung dipanggil)
-function populateSeksiDropdown() {
-    const selectElem = document.getElementById("selectSeksi"); 
-    if (!selectElem) return;
-
-    selectElem.innerHTML = ""; // Bersihkan opsi lama
-
-    DAFTAR_SEKSI.forEach(seksi => {
-        const option = document.createElement("option");
-        option.value = seksi;
-        option.textContent = seksi;
-        selectElem.appendChild(option);
     });
-}
 
-// 5. Fungsi mengisi Dropdown (Langsung dipanggil)
-function populateSeksiDropdown() {
-    const selectElem = document.getElementById("selectSeksi"); 
-    if (!selectElem) return;
-
-    selectElem.innerHTML = ""; // Bersihkan opsi lama
-
-    DAFTAR_SEKSI.forEach(seksi => {
-        const option = document.createElement("option");
-        option.value = seksi;
-        option.textContent = seksi;
-        selectElem.appendChild(option);
-    });
-}
     function formatRupiah(number) {
         if (number === 0) return 'Rp 0';
         if (!number) return '';
