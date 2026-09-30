@@ -444,17 +444,30 @@ function populateSeksiDropdown() {
         if (tabName === 'laporan') renderLaporan();
     }
 
-    function renderAnggaran() {
-        const seksi = currentState.activeSeksi;
-        const currentAnggaran = appData[seksi].anggaran;
-        const inputEl = document.getElementById('input-anggaran');
-        
-        if (currentAnggaran > 0) {
-            inputEl.value = new Intl.NumberFormat('id-ID').format(currentAnggaran);
-        } else {
-            inputEl.value = '';
-        }
+   function renderAnggaran() {
+    const seksi = currentState.activeSeksi;
+    
+    // Validasi: Jika seksi belum dipilih/tidak valid
+    if (!seksi) return;
+
+    // Mencegah error 'Cannot read properties of undefined (reading anggaran)'
+    if (!appData[seksi]) {
+        appData[seksi] = { anggaran: 0, transaksi: [] };
     }
+
+    const nominalAnggaran = appData[seksi].anggaran || 0;
+    
+    // Tampilkan nominal anggaran ke elemen HTML kamu (sesuaikan ID jika berbeda)
+    const displayElem = document.getElementById("displayAnggaran");
+    if (displayElem) {
+        displayElem.innerText = nominalAnggaran.toLocaleString('id-ID');
+    }
+
+    const inputElem = document.getElementById("inputAnggaran");
+    if (inputElem) {
+        inputElem.value = nominalAnggaran;
+    }
+}
 
     function saveAnggaran() {
         const seksi = currentState.activeSeksi;
