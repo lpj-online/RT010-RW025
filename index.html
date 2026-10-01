@@ -1145,12 +1145,12 @@ function exportExcel() {
 
        ws['!cols'] = [
         { wch: 6 },  // NO
-        { wch: 45 }, // SEKSI / PANPEL
+        { wch: 38 }, // SEKSI / PANPEL
         { wch: 12 }, // TANGGAL
-        { wch: 16 }, // JENIS
-        { wch: 45 }, // KETERANGAN
-        { wch: 18 }, // PEMASUKAN
-        { wch: 18 }  // PENGELUARAN
+        { wch: 14 }, // JENIS
+        { wch: 60 }, // KETERANGAN
+        { wch: 12 }, // PEMASUKAN
+        { wch: 12 }  // PENGELUARAN
     ];
 
         XLSX.utils.book_append_sheet(wb, ws, "Rekap Total");
