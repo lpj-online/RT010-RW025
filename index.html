@@ -1136,15 +1136,15 @@ function exportExcel() {
 
     // 4. Blok Tanda Tangan
     let rowSign1 = new Array(7).fill("");
-    rowSign1[0] = "Disusun oleh,";
-    rowSign1[2] = "Mengetahui,";
+    rowSign1[1] = "Disusun oleh,";
     rowSign1[4] = "Mengetahui,";
+    rowSign1[7] = "Mengetahui,";
     excelData.push(rowSign1);
 
     let rowSignSub = new Array(7).fill("");
-    rowSignSub[0] = "Ketua Panitia";
-    rowSignSub[2] = "Bendahara RT";
-    rowSignSub[4] = "Ketua RT 10/25";
+    rowSignSub[1] = "Ketua Panitia";
+    rowSignSub[4] = "Bendahara RT";
+    rowSignSub[7] = "Ketua RT 10/25";
     excelData.push(rowSignSub);
 
     excelData.push(new Array(7).fill(""));
