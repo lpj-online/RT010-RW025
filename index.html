@@ -1156,11 +1156,16 @@ function exportRekapGabunganToExcel() {
         { wch: 12 }  // PENGELUARAN
     ];
 
+    // === KODE BARU: MERGE JUDUL DARI KOLOM A (0) SAMPAI G (6) ===
+    ws['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }, // Merge baris ke-1 (LAPORAN REKAPITULASI...)
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 6 } }  // Merge baris ke-2 (RT 10 / RW 25)
+    ];
+
     // =========================================================================
     // PROSES CUSTOM STYLING (BORDER, BOLD, BACKGROUND COLOR, & ALIGNMENT)
     // =========================================================================
     
-    // 1. Definisikan komponen style standar
     const blackBorder = {
         top: { style: "thin", color: { rgb: "000000" } },
         bottom: { style: "thin", color: { rgb: "000000" } },
@@ -1168,20 +1173,23 @@ function exportRekapGabunganToExcel() {
         right: { style: "thin", color: { rgb: "000000" } }
     };
     
-    const blueHeaderBg = { fillType: "solid", fgColor: { rgb: "D9E1F2" } }; // Warna biru muda lembut
+    const blueHeaderBg = { fillType: "solid", fgColor: { rgb: "D9E1F2" } };
     const fontBold = { bold: true };
     const alignCenter = { horizontal: "center", vertical: "center" };
 
-    // 2. Terapkan style pada Judul Laporan Paling Atas (Baris 1 & 2)
-    const titleA1 = ws['A1']; if (titleA1) titleA1.s = { font: { bold: true, size: 14 } };
-    const titleA2 = ws['A2']; if (titleA2) titleA2.s = { font: { bold: true, size: 12 } };
+    // Terapkan Judul Rata Tengah & Bold (Menggunakan objek gaya lengkap)
+    const titleA1 = ws['A1']; 
+    if (titleA1) titleA1.s = { font: { bold: true, size: 14 }, alignment: alignCenter };
+    
+    const titleA2 = ws['A2']; 
+    if (titleA2) titleA2.s = { font: { bold: true, size: 12 }, alignment: alignCenter };
 
-    // 3. Looping seluruh sel untuk mengatur tabel data dan total
+    // Looping seluruh sel untuk mengatur tabel data dan total
     const range = XLSX.utils.decode_range(ws['!ref']);
 
     for (let R = range.s.r; R <= range.e.r; ++R) {
         
-        // --- BLOK A: JIKA BARIS ADALAH HEADER TABEL (Index R === 3) ---
+        // --- BLOK A: HEADER TABEL (Index R === 3) ---
         if (R === 3) {
             for (let C = range.s.c; C <= range.e.c; ++C) {
                 const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
@@ -1196,31 +1204,29 @@ function exportRekapGabunganToExcel() {
             }
         }
         
-        // --- BLOK B: JIKA BARIS ADALAH DATA TRANSAKSI (Mulai Index 4 sampai sebelum Total) ---
+        // --- BLOK B: DATA TRANSAKSI ---
         else if (R > 3 && R < batasBawahTabel) {
             for (let C = range.s.c; C <= range.e.c; ++C) {
                 const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
                 if (!ws[cellAddress]) ws[cellAddress] = { t: "s", v: "" };
                 
-                // Siapkan struktur style dasar untuk data berupa border hitam
                 ws[cellAddress].s = { border: blackBorder };
                 
-                // Tambahkan Rata Tengah khusus kolom NO (0), TANGGAL (2), dan JENIS (3)
                 if (C === 0 || C === 2 || C === 3) {
                     ws[cellAddress].s.alignment = alignCenter;
                 }
             }
         }
         
-        // --- BLOK C: JIKA BARIS ADALAH TOTAL KESELURUHAN & SALDO AKHIR ---
+        // --- BLOK C: TOTAL KESELURUHAN & SALDO AKHIR ---
         else if (R === batasBawahTabel + 1 || R === batasBawahTabel + 2) {
-            for (let C = 4; C <= 6; ++C) { // Kolom Deskripsi, Pemasukan, Pengeluaran
+            for (let C = 4; C <= 6; ++C) {
                 const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
                 if (!ws[cellAddress]) ws[cellAddress] = { t: "s", v: "" };
                 
                 ws[cellAddress].s = {
                     border: blackBorder,
-                    font: fontBold // Membuat teks TOTAL KESELURUHAN & SALDO AKHIR jadi Bold
+                    font: fontBold
                 };
             }
         }
@@ -1231,8 +1237,6 @@ function exportRekapGabunganToExcel() {
     const fileName = `Laporan_Rekapitulasi_Total_LPJ_${tglCetak.replace(/\//g, '-')}.xlsx`;
     XLSX.writeFile(wb, fileName);
 }
-
-
 
    </script>
  </body>
