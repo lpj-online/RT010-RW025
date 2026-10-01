@@ -1060,90 +1060,90 @@ function exportExcel() {
     XLSX.writeFile(wb, fileName);
     }
 
- function exportRekapGabunganToExcel() {
-        const today = new Date();
-        const tglCetak = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
-        const wb = XLSX.utils.book_new();
+function exportRekapGabunganToExcel() {
+    const today = new Date();
+    const tglCetak = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
+    const wb = XLSX.utils.book_new();
 
-        // Header Laporan Rekap Total
-        const excelData = [
-            ["LAPORAN REKAPITULASI TOTAL PENGGUNAAN DANA"],
-            ["RT 10 / RW 25"],
-            [],
-            ["NO", "SEKSI / PANPEL", "TANGGAL", "JENIS", "KETERANGAN / RINCIAN", "PEMASUKAN (Rp)", "PENGELUARAN (Rp)"]
-        ];
+    // Header Laporan Rekap Total
+    const excelData = [
+        ["LAPORAN REKAPITULASI TOTAL PENGGUNAAN DANA"],
+        ["RT 10 / RW 25"],
+        [],
+        ["NO", "SEKSI / PANPEL", "TANGGAL", "JENIS", "KETERANGAN / RINCIAN", "PEMASUKAN (Rp)", "PENGELUARAN (Rp)"]
+    ];
 
-        let no = 1;
-        let totalPemasukan = 0;
-        let totalPengeluaran = 0;
+    let no = 1;
+    let totalPemasukan = 0;
+    let totalPengeluaran = 0;
 
-        // Loop mengambil seluruh data seksi
-        const daftarSeksiKeys = Object.keys(appData);
-        daftarSeksiKeys.forEach(seksi => {
-            const dataSeksi = appData[seksi];
-            const transaksiList = dataSeksi ? (dataSeksi.transaksi || []) : [];
+    // Loop mengambil seluruh data seksi
+    const daftarSeksiKeys = Object.keys(appData);
+    daftarSeksiKeys.forEach(seksi => {
+        const dataSeksi = appData[seksi];
+        const transaksiList = dataSeksi ? (dataSeksi.transaksi || []) : [];
 
-            transaksiList.forEach(trx => {
-                const rawDate = trx.tanggal ? trx.tanggal.split('T')[0] : '';
-                const parts = rawDate.split('-');
-                const tglClean = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : rawDate;
+        transaksiList.forEach(trx => {
+            const rawDate = trx.tanggal ? trx.tanggal.split('T')[0] : '';
+            const parts = rawDate.split('-');
+            const tglClean = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : rawDate;
 
-                const nominalPemasukan = trx.jenis === 'pemasukan' ? (parseFloat(trx.nominal) || 0) : 0;
-                const nominalPengeluaran = trx.jenis === 'pengeluaran' ? (parseFloat(trx.nominal) || 0) : 0;
+            const nominalPemasukan = trx.jenis === 'pemasukan' ? (parseFloat(trx.nominal) || 0) : 0;
+            const nominalPengeluaran = trx.jenis === 'pengeluaran' ? (parseFloat(trx.nominal) || 0) : 0;
 
-                totalPemasukan += nominalPemasukan;
-                totalPengeluaran += nominalPengeluaran;
+            totalPemasukan += nominalPemasukan;
+            totalPengeluaran += nominalPengeluaran;
 
-                excelData.push([
-                    no++,
-                    seksi,
-                    tglClean,
-                    trx.jenis ? trx.jenis.toUpperCase() : '',
-                    trx.keterangan || '',
-                    nominalPemasukan,
-                    nominalPengeluaran
-                ]);
-            });
+            excelData.push([
+                no++,
+                seksi,
+                tglClean,
+                trx.jenis ? trx.jenis.toUpperCase() : '',
+                trx.keterangan || '',
+                nominalPemasukan,
+                nominalPengeluaran
+            ]);
         });
+    });
 
-        if (no === 1) {
-            excelData.push([1, "-", "-", "-", "Belum ada transaksi recorded", 0, 0]);
-        }
+    if (no === 1) {
+        excelData.push([1, "-", "-", "-", "Belum ada transaksi recorded", 0, 0]);
+    }
 
-        // Baris Total & Saldo Akhir
-        excelData.push([]);
-        excelData.push(["", "", "", "", "TOTAL KESELURUHAN", totalPemasukan, totalPengeluaran]);
-        excelData.push(["", "", "", "", "SALDO AKHIR (SISA DANA)", totalPemasukan - totalPengeluaran, ""]);
-        excelData.push([]);
+    // Baris Total & Saldo Akhir
+    excelData.push([]);
+    excelData.push(["", "", "", "", "TOTAL KESELURUHAN", totalPemasukan, totalPengeluaran]);
+    excelData.push(["", "", "", "", "SALDO AKHIR (SISA DANA)", totalPemasukan - totalPengeluaran, ""]);
+    excelData.push([]);
 
-        // Area Tanda Tangan
-        let rowSign1 = new Array(7).fill("");
-        rowSign1[1] = "Disusun oleh,";
-        rowSign1[2] = "Mengetahui,";
-        rowSign1[4] = "Mengetahui,";
-        excelData.push(rowSign1);
+    // Area Tanda Tangan
+    let rowSign1 = new Array(7).fill("");
+    rowSign1[1] = "Disusun oleh,";
+    rowSign1[2] = "Mengetahui,";
+    rowSign1[4] = "Mengetahui,";
+    excelData.push(rowSign1);
 
-        let rowSignSub = new Array(7).fill("");
-        rowSignSub[1] = "Ketua Panitia";
-        rowSignSub[2] = "Bendahara RT";
-        rowSignSub[4] = "Ketua RT 10/25";
-        excelData.push(rowSignSub);
+    let rowSignSub = new Array(7).fill("");
+    rowSignSub[1] = "Ketua Panitia";
+    rowSignSub[2] = "Bendahara RT";
+    rowSignSub[4] = "Ketua RT 10/25";
+    excelData.push(rowSignSub);
 
-        excelData.push(new Array(7).fill(""));
-        excelData.push(new Array(7).fill(""));
+    excelData.push(new Array(7).fill(""));
+    excelData.push(new Array(7).fill(""));
 
-        let rowSign2 = new Array(7).fill("");
-        rowSign2[1] = "( ___________________ )";
-        rowSign2[2] = "( ___________________ )";
-        rowSign2[4] = "( ___________________ )";
-        excelData.push(rowSign2);
+    let rowSign2 = new Array(7).fill("");
+    rowSign2[1] = "( ___________________ )";
+    rowSign2[2] = "( ___________________ )";
+    rowSign2[4] = "( ___________________ )";
+    excelData.push(rowSign2);
 
-        excelData.push([]);
-        excelData.push([`* Berkas sah sebagai rekapitulasi gabungan. Dicetak otomatis pada tanggal: ${tglCetak}`]);
+    excelData.push([]);
+    excelData.push([`* Berkas sah sebagai rekapitulasi gabungan. Dicetak otomatis pada tanggal: ${tglCetak}`]);
 
-        const ws = XLSX.utils.aoa_to_sheet(excelData);
+    const ws = XLSX.utils.aoa_to_sheet(excelData);
 
-       ws['!cols'] = [
+    ws['!cols'] = [
         { wch: 6 },  // NO
         { wch: 38 }, // SEKSI / PANPEL
         { wch: 12 }, // TANGGAL
@@ -1153,10 +1153,18 @@ function exportExcel() {
         { wch: 12 }  // PENGELUARAN
     ];
 
-        XLSX.utils.book_append_sheet(wb, ws, "Rekap Total");
-        const fileName = `Laporan_Rekapitulasi_Total_LPJ_${tglCetak.replace(/\//g, '-')}.xlsx`;
-        XLSX.writeFile(wb, fileName);
-    }
+    // === TAMBAHKAN KODE INI ===
+    // Kode di bawah ini berfungsi untuk memaksa Excel menampilkan garis grid tabel
+    ws['!views'] = [
+        { showGridLines: true }
+    ];
+    // ==========================
+
+    XLSX.utils.book_append_sheet(wb, ws, "Rekap Total");
+    const fileName = `Laporan_Rekapitulasi_Total_LPJ_${tglCetak.replace(/\//g, '-')}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+}
+
        
    </script>
  </body>
