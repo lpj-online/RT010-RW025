@@ -1142,10 +1142,25 @@ function exportExcel() {
         excelData.push([`* Berkas sah sebagai rekapitulasi gabungan. Dicetak otomatis pada tanggal: ${tglCetak}`]);
 
         const ws = XLSX.utils.aoa_to_sheet(excelData);
+ // Merge Cell yang Presisi
+    worksheet["!merges"] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }, // Judul Utama
+        { s: { r: lastRowIdx, c: 0 }, e: { r: lastRowIdx, c: 5 } }, // Footnote
 
+        // Merge "Disusun oleh," (Kolom B-C) & "Mengetahui," (Kolom E-F)
+        { s: { r: signStartIdx, c: 1 }, e: { r: signStartIdx, c: 2 } },
+        { s: { r: signStartIdx, c: 4 }, e: { r: signStartIdx, c: 5 } },
+
+        // Merge "Ketua Panitia" & "Ketua RT 10/25"
+        { s: { r: signStartIdx + 1, c: 1 }, e: { r: signStartIdx + 1, c: 2 } },
+        { s: { r: signStartIdx + 1, c: 4 }, e: { r: signStartIdx + 1, c: 5 } },
+
+        { s: { r: signStartIdx + 4, c: 1 }, e: { r: signStartIdx + 4, c: 2 } },
+        { s: { r: signStartIdx + 4, c: 4 }, e: { r: signStartIdx + 4, c: 5 } }
+    ];
         ws['!cols'] = [
-            { wch: 5 },  { wch: 25 }, { wch: 12 },
-            { wch: 15 }, { wch: 35 }, { wch: 18 }, { wch: 18 }
+            { wch: 6 },  { wch: 35 }, { wch: 14 },
+            { wch: 14 }, { wch: 45 }, { wch: 18 }, { wch: 18 }
         ];
 
         XLSX.utils.book_append_sheet(wb, ws, "Rekap Total");
