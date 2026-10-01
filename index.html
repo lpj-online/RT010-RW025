@@ -873,7 +873,6 @@ function renderTransaksi() {
     });
 }
 
-// 1. FUNGSI MEMBERI WARNA, BORDER, DAN STYLE UNTUK 6 KOLOM RT
 function applyExcelStylesRT(worksheet, rows) {
     const border = {
         top: { style: "medium", color: { rgb: "000000" } },
@@ -927,7 +926,6 @@ function applyExcelStylesRT(worksheet, rows) {
             const address = XLSX.utils.encode_cell({ r: row, c: col });
             let cell = worksheet[address];
 
-            // Jika sel kosong di area merge, buatkan sel dummy agar style/alignment center tetap berlaku
             if (!cell) {
                 cell = { t: 's', v: '' };
                 worksheet[address] = cell;
@@ -940,20 +938,20 @@ function applyExcelStylesRT(worksheet, rows) {
             } else if (row >= 3 && row < signStartIdx - 1) { // Hanya baris data transaksi
                 cell.s = { ...bodyStyle };
 
-                // Format Angka Ribuan (Pemasukan & Pengeluaran)
+               
                 if ([4, 5].includes(col)) {
                     cell.z = "#,##0";
                     cell.s.alignment = { horizontal: "right", vertical: "center" };
                 }
 
-                // Ratakan Tengah (NO, TANGGAL, JENIS)
+                
                 if ([0, 1, 2].includes(col)) {
                     cell.s.alignment = { horizontal: "center", vertical: "center" };
                 }
             } else if (row === lastRowIdx) {
                 cell.s = footerStyle;
             } else if (row >= signStartIdx) {
-                // Semua baris di area tanda tangan dibuat Rata Tengah (Center)
+                
                 cell.s = {
                     font: { bold: row === signStartIdx + 1 }, // Cetak tebal untuk Ketua Panitia & Ketua RT
                     alignment: { horizontal: "center", vertical: "center" }
@@ -975,12 +973,10 @@ function applyExcelStylesRT(worksheet, rows) {
         { s: { r: signStartIdx + 1, c: 1 }, e: { r: signStartIdx + 1, c: 2 } },
         { s: { r: signStartIdx + 1, c: 4 }, e: { r: signStartIdx + 1, c: 5 } },
 
-        // Merge Garis Nama Terang
         { s: { r: signStartIdx + 4, c: 1 }, e: { r: signStartIdx + 4, c: 2 } },
         { s: { r: signStartIdx + 4, c: 4 }, e: { r: signStartIdx + 4, c: 5 } }
     ];
 
-    // Lebar Kolom
     worksheet["!cols"] = [
         { wch: 6 },  // NO
         { wch: 14 }, // TANGGAL
@@ -990,12 +986,11 @@ function applyExcelStylesRT(worksheet, rows) {
         { wch: 20 }  // PENGELUARAN
     ];
 
-    // Filter Hanya untuk Tabel Data (A3 sampai F baris data terakhir)
     worksheet["!autofilter"] = {
         ref: `A3:F${signStartIdx - 2}`
     };
 }
-// 2. FUNGSI UTAMA EXPORT EXCEL PER SEKSI
+
 function exportExcel() {
     const seksi = currentState.activeSeksi;
     if (!seksi) {
@@ -1006,18 +1001,15 @@ function exportExcel() {
     const dataSeksi = appData[seksi];
     const transaksiList = dataSeksi ? (dataSeksi.transaksi || []) : [];
 
-    // Tanggal Cetak (DD/MM/YYYY)
     const today = new Date();
     const tglCetak = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
 
-    // Header Laporan
     const excelData = [
         [`PENGAJUAN PENGGUNAAN DANA - ${seksi.toUpperCase()}`], // Row 0
         [], // Row 1
         ["NO", "TANGGAL", "JENIS", "KETERANGAN / RINCIAN", "PEMASUKAN (Rp)", "PENGELUARAN (Rp)"] // Row 2
     ];
 
-    // Isi Data Transaksi
     transaksiList.forEach((trx, index) => {
         const rawDate = trx.tanggal ? trx.tanggal.split('T')[0] : '';
         const parts = rawDate.split('-');
@@ -1033,7 +1025,6 @@ function exportExcel() {
         ]);
     });
 
-    // Baris Tanda Tangan & Footnote
     excelData.push([]); // Spasi
     
    let rowSign1 = new Array(6).fill("");
@@ -1041,17 +1032,14 @@ function exportExcel() {
     rowSign1[4] = "Mengetahui,";
     excelData.push(rowSign1);
 
-    // Baris 2: Jabatan
     let rowSignSub = new Array(6).fill("");
     rowSignSub[1] = "Ketua Panitia";
     rowSignSub[4] = "Ketua RT 10/25";
     excelData.push(rowSignSub);
 
-    // Baris 3 & 4: Ruang Kosong Tanda Tangan
     excelData.push(new Array(6).fill(""));
     excelData.push(new Array(6).fill(""));
 
-    // Baris 5: Nama Terang
     let rowSign2 = new Array(6).fill("");
     rowSign2[1] = "( ___________________ )";
     rowSign2[4] = "( ___________________ )";
@@ -1060,17 +1048,14 @@ function exportExcel() {
     excelData.push([]); // Spasi
     excelData.push([`* Berkas sah digunakan sebagai bukti fisik penggunaan anggaran. Dicetak otomatis pada tanggal: ${tglCetak}`]);
     
-    // Generate Worksheet & Workbook
     const ws = XLSX.utils.aoa_to_sheet(excelData);
     
-    // Panggil Fungsi Style yang Sudah Disesuaikan (Mencegah Error Unduh)
     applyExcelStylesRT(ws, excelData);
 
     const wb = XLSX.utils.book_new();
     const sheetName = seksi.replace(/[\\/*?:\[\]]/g, "").trim().substring(0, 30) || "LPJ";
     XLSX.utils.book_append_sheet(wb, ws, sheetName);
 
-    // Proses Unduh
     const fileName = `LPJ_Keuangan_${seksi.replace(/\s+/g, '_')}_${tglCetak.replace(/\//g, '-')}.xlsx`;
     XLSX.writeFile(wb, fileName);
     }
@@ -1092,7 +1077,6 @@ function exportExcel() {
     let totalPemasukan = 0;
     let totalPengeluaran = 0;
 
-    // 2. Ambil semua seksi dari appData / daftar seksi
     const daftarSeksiKeys = Object.keys(appData);
 
     daftarSeksiKeys.forEach(seksi => {
@@ -1123,18 +1107,15 @@ function exportExcel() {
         });
     });
 
-    // Jika belum ada transaksi sama sekali
     if (no === 1) {
         excelData.push([1, "-", "-", "-", "Belum ada transaksi recorded", 0, 0]);
     }
 
-    // 3. Baris Total & Saldo Akhir
     excelData.push([]);
     excelData.push(["", "", "", "", "TOTAL KESELURUHAN", totalPemasukan, totalPengeluaran]);
     excelData.push(["", "", "", "", "SALDO AKHIR (SISA DANA)", totalPemasukan - totalPengeluaran, ""]);
     excelData.push([]);
 
-    // 4. Blok Tanda Tangan
     let rowSign1 = new Array(7).fill("");
     rowSign1[1] = "Disusun oleh,";
     rowSign1[3] = "Mengetahui,";
@@ -1159,10 +1140,8 @@ function exportExcel() {
     excelData.push([]);
     excelData.push([`* Berkas sah sebagai rekapitulasi gabungan. Dicetak otomatis pada tanggal: ${tglCetak}`]);
 
-    // 5. Membuat Sheet & Mengaplikasikan ke Workbook
     const ws = XLSX.utils.aoa_to_sheet(excelData);
 
-    // Atur Lebar Kolom agar rapi
     ws['!cols'] = [
         { wch: 5 },  // NO
         { wch: 25 }, // SEKSI / PANPEL
@@ -1173,10 +1152,8 @@ function exportExcel() {
         { wch: 18 }  // PENGELUARAN
     ];
 
-    // Masukkan ke Workbook dengan nama Sheet "Rekap Total"
     XLSX.utils.book_append_sheet(wb, ws, "Rekap Total");
 
-    // 6. Download File Excel
     const fileName = `Laporan_Rekapitulasi_Total_LPJ_${tglCetak.replace(/\//g, '-')}.xlsx`;
     XLSX.writeFile(wb, fileName);
 }
