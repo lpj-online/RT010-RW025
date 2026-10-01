@@ -1066,8 +1066,114 @@ function exportExcel() {
     // Proses Unduh
     const fileName = `LPJ_Keuangan_${seksi.replace(/\s+/g, '_')}_${tglCetak.replace(/\//g, '-')}.xlsx`;
     XLSX.writeFile(wb, fileName);
+    }
+
+    function exportRekapGabunganToExcel() {
+    const today = new Date();
+    const tglCetak = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
+    const wb = XLSX.utils.book_new();
+
+    // 1. Header Laporan
+    const excelData = [
+        ["LAPORAN REKAPITULASI TOTAL PENGGUNAAN DANA"],
+        ["RT 10 / RW 25"],
+        [],
+        ["NO", "SEKSI / PANPEL", "TANGGAL", "JENIS", "KETERANGAN / RINCIAN", "PEMASUKAN (Rp)", "PENGELUARAN (Rp)"]
+    ];
+
+    let no = 1;
+    let totalPemasukan = 0;
+    let totalPengeluaran = 0;
+
+    // 2. Ambil semua seksi dari appData / daftar seksi
+    const daftarSeksiKeys = Object.keys(appData);
+
+    daftarSeksiKeys.forEach(seksi => {
+        const dataSeksi = appData[seksi];
+        const transaksiList = dataSeksi ? (dataSeksi.transaksi || []) : [];
+
+        transaksiList.forEach(trx => {
+            // Format Tanggal (YYYY-MM-DD -> DD/MM/YYYY)
+            const rawDate = trx.tanggal ? trx.tanggal.split('T')[0] : '';
+            const parts = rawDate.split('-');
+            const tglClean = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : rawDate;
+
+            const nominalPemasukan = trx.jenis === 'pemasukan' ? (parseFloat(trx.nominal) || 0) : 0;
+            const nominalPengeluaran = trx.jenis === 'pengeluaran' ? (parseFloat(trx.nominal) || 0) : 0;
+
+            totalPemasukan += nominalPemasukan;
+            totalPengeluaran += nominalPengeluaran;
+
+            excelData.push([
+                no++,
+                seksi,
+                tglClean,
+                trx.jenis ? trx.jenis.toUpperCase() : '',
+                trx.keterangan || '',
+                nominalPemasukan,
+                nominalPengeluaran
+            ]);
+        });
+    });
+
+    // Jika belum ada transaksi sama sekali
+    if (no === 1) {
+        excelData.push([1, "-", "-", "-", "Belum ada transaksi recorded", 0, 0]);
+    }
+
+    // 3. Baris Total & Saldo Akhir
+    excelData.push([]);
+    excelData.push(["", "", "", "", "TOTAL KESELURUHAN", totalPemasukan, totalPengeluaran]);
+    excelData.push(["", "", "", "", "SALDO AKHIR (SISA DANA)", totalPemasukan - totalPengeluaran, ""]);
+    excelData.push([]);
+
+    // 4. Blok Tanda Tangan
+    let rowSign1 = new Array(7).fill("");
+    rowSign1[0] = "Disusun oleh,";
+    rowSign1[2] = "Mengetahui,";
+    rowSign1[4] = "Mengetahui,";
+    excelData.push(rowSign1);
+
+    let rowSignSub = new Array(7).fill("");
+    rowSignSub[0] = "Ketua Panitia";
+    rowSignSub[2] = "Bendahara RT";
+    rowSignSub[4] = "Ketua RT 10/25";
+    excelData.push(rowSignSub);
+
+    excelData.push(new Array(7).fill(""));
+    excelData.push(new Array(7).fill(""));
+
+    let rowSign2 = new Array(7).fill("");
+    rowSign2[0] = "( ___________________ )";
+    rowSign2[2] = "( ___________________ )";
+    rowSign2[4] = "( ___________________ )";
+    excelData.push(rowSign2);
+
+    excelData.push([]);
+    excelData.push([`* Berkas sah sebagai rekapitulasi gabungan. Dicetak otomatis pada tanggal: ${tglCetak}`]);
+
+    // 5. Membuat Sheet & Mengaplikasikan ke Workbook
+    const ws = XLSX.utils.aoa_to_sheet(excelData);
+
+    // Atur Lebar Kolom agar rapi
+    ws['!cols'] = [
+        { wch: 5 },  // NO
+        { wch: 25 }, // SEKSI / PANPEL
+        { wch: 12 }, // TANGGAL
+        { wch: 15 }, // JENIS
+        { wch: 35 }, // KETERANGAN
+        { wch: 18 }, // PEMASUKAN
+        { wch: 18 }  // PENGELUARAN
+    ];
+
+    // Masukkan ke Workbook dengan nama Sheet "Rekap Total"
+    XLSX.utils.book_append_sheet(wb, ws, "Rekap Total");
+
+    // 6. Download File Excel
+    const fileName = `Laporan_Rekapitulasi_Total_LPJ_${tglCetak.replace(/\//g, '-')}.xlsx`;
+    XLSX.writeFile(wb, fileName);
 }
-   
+       
    </script>
  </body>
 </html>
