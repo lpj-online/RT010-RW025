@@ -1110,6 +1110,9 @@ function exportRekapGabunganToExcel() {
         excelData.push([1, "-", "-", "-", "Belum ada transaksi recorded", 0, 0]);
     }
 
+    // Catat baris terakhir dari data tabel utama sebelum baris Total
+    const batasBawahTabel = excelData.length;
+
     // Baris Total & Saldo Akhir
     excelData.push([]);
     excelData.push(["", "", "", "", "TOTAL KESELURUHAN", totalPemasukan, totalPengeluaran]);
@@ -1153,17 +1156,47 @@ function exportRekapGabunganToExcel() {
         { wch: 12 }  // PENGELUARAN
     ];
 
-    // === TAMBAHKAN KODE INI ===
-    // Kode di bawah ini berfungsi untuk memaksa Excel menampilkan garis grid tabel
-    ws['!views'] = [
-        { showGridLines: true }
-    ];
-    // ==========================
+    // =========================================================================
+    // PROSES MEMBERI BORDER HITAM KUSTOM PADA DATA TABEL & BARIS TOTAL
+    // =========================================================================
+    
+    // Pola border hitam tipis kustom
+    const blackBorder = {
+        top: { style: "thin", color: { rgb: "000000" } },
+        bottom: { style: "thin", color: { rgb: "000000" } },
+        left: { style: "thin", color: { rgb: "000000" } },
+        right: { style: "thin", color: { rgb: "000000" } }
+    };
+
+    // Cari tahu rentang sel keseluruhan
+    const range = XLSX.utils.decode_range(ws['!ref']);
+
+    for (let R = range.s.r; R <= range.e.r; ++R) {
+        // Baris ke-3 adalah Header Tabel (Index 3), dan looping sampai batas bawah tabel data Anda
+        if (R >= 3 && R < batasBawahTabel) {
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+                if (!ws[cellAddress]) ws[cellAddress] = { t: "s", v: "" }; // Buat sel kosong jika data tidak ada agar tetap bergaris
+                ws[cellAddress].s = { border: blackBorder };
+            }
+        }
+        
+        // Memberi border khusus pada Baris TOTAL KESELURUHAN dan SALDO AKHIR (Hanya kolom Deskripsi, Pemasukan, Pengeluaran)
+        if (R === batasBawahTabel + 1 || R === batasBawahTabel + 2) {
+            for (let C = 4; C <= 6; ++C) {
+                const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+                if (!ws[cellAddress]) ws[cellAddress] = { t: "s", v: "" };
+                ws[cellAddress].s = { border: blackBorder };
+            }
+        }
+    }
+    // =========================================================================
 
     XLSX.utils.book_append_sheet(wb, ws, "Rekap Total");
     const fileName = `Laporan_Rekapitulasi_Total_LPJ_${tglCetak.replace(/\//g, '-')}.xlsx`;
     XLSX.writeFile(wb, fileName);
 }
+
 
        
    </script>
