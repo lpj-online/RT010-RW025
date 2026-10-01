@@ -1084,7 +1084,6 @@ function exportExcel() {
         const transaksiList = dataSeksi ? (dataSeksi.transaksi || []) : [];
 
         transaksiList.forEach(trx => {
-            // Format Tanggal (YYYY-MM-DD -> DD/MM/YYYY)
             const rawDate = trx.tanggal ? trx.tanggal.split('T')[0] : '';
             const parts = rawDate.split('-');
             const tglClean = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : rawDate;
@@ -1116,22 +1115,22 @@ function exportExcel() {
     excelData.push(["", "", "", "", "SALDO AKHIR (SISA DANA)", totalPemasukan - totalPengeluaran, ""]);
     excelData.push([]);
 
-    let rowSign1 = new Array(7).fill("");
+    let rowSign1 = new Array(6).fill("");
     rowSign1[1] = "Disusun oleh,";
     rowSign1[3] = "Mengetahui,";
     rowSign1[5] = "Mengetahui,";
     excelData.push(rowSign1);
 
-    let rowSignSub = new Array(7).fill("");
+    let rowSignSub = new Array(6).fill("");
     rowSignSub[1] = "Ketua Panitia";
     rowSignSub[3] = "Bendahara RT";
     rowSignSub[5] = "Ketua RT 10/25";
     excelData.push(rowSignSub);
 
-    excelData.push(new Array(7).fill(""));
-    excelData.push(new Array(7).fill(""));
+    excelData.push(new Array(6).fill(""));
+    excelData.push(new Array(6).fill(""));
 
-    let rowSign2 = new Array(7).fill("");
+    let rowSign2 = new Array(6).fill("");
     rowSign2[1] = "( ___________________ )";
     rowSign2[3] = "( ___________________ )";
     rowSign2[5] = "( ___________________ )";
