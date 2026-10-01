@@ -1137,23 +1137,23 @@ function exportExcel() {
     // 4. Blok Tanda Tangan
     let rowSign1 = new Array(7).fill("");
     rowSign1[1] = "Disusun oleh,";
-    rowSign1[4] = "Mengetahui,";
-    rowSign1[7] = "Mengetahui,";
+    rowSign1[3] = "Mengetahui,";
+    rowSign1[5] = "Mengetahui,";
     excelData.push(rowSign1);
 
     let rowSignSub = new Array(7).fill("");
     rowSignSub[1] = "Ketua Panitia";
-    rowSignSub[4] = "Bendahara RT";
-    rowSignSub[7] = "Ketua RT 10/25";
+    rowSignSub[3] = "Bendahara RT";
+    rowSignSub[5] = "Ketua RT 10/25";
     excelData.push(rowSignSub);
 
     excelData.push(new Array(7).fill(""));
     excelData.push(new Array(7).fill(""));
 
     let rowSign2 = new Array(7).fill("");
-    rowSign2[0] = "( ___________________ )";
-    rowSign2[2] = "( ___________________ )";
-    rowSign2[4] = "( ___________________ )";
+    rowSign2[1] = "( ___________________ )";
+    rowSign2[3] = "( ___________________ )";
+    rowSign2[5] = "( ___________________ )";
     excelData.push(rowSign2);
 
     excelData.push([]);
