@@ -1119,14 +1119,14 @@ function exportExcel() {
         // Area Tanda Tangan
         let rowSign1 = new Array(7).fill("");
         rowSign1[1] = "Disusun oleh,";
-        rowSign1[3] = "Mengetahui,";
-        rowSign1[5] = "Mengetahui,";
+        rowSign1[2] = "Mengetahui,";
+        rowSign1[4] = "Mengetahui,";
         excelData.push(rowSign1);
 
         let rowSignSub = new Array(7).fill("");
         rowSignSub[1] = "Ketua Panitia";
-        rowSignSub[3] = "Bendahara RT";
-        rowSignSub[5] = "Ketua RT 10/25";
+        rowSignSub[2] = "Bendahara RT";
+        rowSignSub[4] = "Ketua RT 10/25";
         excelData.push(rowSignSub);
 
         excelData.push(new Array(7).fill(""));
@@ -1134,8 +1134,8 @@ function exportExcel() {
 
         let rowSign2 = new Array(7).fill("");
         rowSign2[1] = "( ___________________ )";
-        rowSign2[3] = "( ___________________ )";
-        rowSign2[5] = "( ___________________ )";
+        rowSign2[2] = "( ___________________ )";
+        rowSign2[4] = "( ___________________ )";
         excelData.push(rowSign2);
 
         excelData.push([]);
@@ -1148,7 +1148,7 @@ function exportExcel() {
         { wch: 38 }, // SEKSI / PANPEL
         { wch: 12 }, // TANGGAL
         { wch: 14 }, // JENIS
-        { wch: 60 }, // KETERANGAN
+        { wch: 56 }, // KETERANGAN
         { wch: 12 }, // PEMASUKAN
         { wch: 12 }  // PENGELUARAN
     ];
