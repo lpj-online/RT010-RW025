@@ -1184,14 +1184,6 @@ function exportRekapGabunganToExcel() {
     const titleA2 = ws['A2']; 
     if (titleA2) titleA2.s = { font: { bold: true, size: 12 }, alignment: alignCenter };
 
-
-    // Terapkan Judul Rata Tengah & Bold (Menggunakan objek gaya lengkap)
-    const titleA1 = ws['A1']; 
-    if (titleA1) titleA1.s = { font: { bold: true, size: 14 }, alignment: alignCenter };
-    
-    const titleA2 = ws['A2']; 
-    if (titleA2) titleA2.s = { font: { bold: true, size: 12 }, alignment: alignCenter };
-
     // Looping seluruh sel untuk mengatur tabel data dan total
     const range = XLSX.utils.decode_range(ws['!ref']);
 
