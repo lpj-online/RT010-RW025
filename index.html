@@ -1166,16 +1166,49 @@ function exportRekapGabunganToExcel() {
     // PROSES CUSTOM STYLING (BORDER, BOLD, BACKGROUND COLOR, & ALIGNMENT)
     // =========================================================================
     
-    const blackBorder = {
+     const border = {
+        top: { style: "medium", color: { rgb: "000000" } },
+        bottom: { style: "medium", color: { rgb: "000000" } },
+        left: { style: "medium", color: { rgb: "000000" } },
+        right: { style: "medium", color: { rgb: "000000" } }
+    };
+
+    const thinBorder = {
         top: { style: "thin", color: { rgb: "000000" } },
         bottom: { style: "thin", color: { rgb: "000000" } },
         left: { style: "thin", color: { rgb: "000000" } },
         right: { style: "thin", color: { rgb: "000000" } }
     };
-    
-    const blueHeaderBg = { fillType: "solid", fgColor: { rgb: "13402D" } };
-    const fontBold = { bold: true };
-    const alignCenter = { horizontal: "center", vertical: "center" };
+
+    const titleStyle = {
+        font: { bold: true, sz: 14, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "13402D" } }, // Hijau Botol Utama
+        alignment: { horizontal: "center", vertical: "center" },
+        border
+    };
+
+    const headerStyle = {
+        font: { bold: true, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "1F4E3D" } }, // Hijau Botol Header
+        alignment: { horizontal: "center", vertical: "center", wrapText: true },
+        border
+    };
+
+    const bodyStyle = {
+        border: thinBorder,
+        alignment: { vertical: "center", wrapText: true }
+    };
+
+    const footerStyle = {
+        font: { italic: true, color: { rgb: "666666" }, sz: 9 },
+        alignment: { vertical: "center" }
+    };
+
+    const signStyle = {
+        font: { bold: true },
+        alignment: { horizontal: "center", vertical: "center" }
+    };
+
 
     // Terapkan Judul Rata Tengah & Bold (Menggunakan objek gaya lengkap)
     const titleA1 = ws['A1']; 
